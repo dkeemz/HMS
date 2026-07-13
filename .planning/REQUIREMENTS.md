@@ -210,52 +210,52 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| AUTH-05 | — | Pending |
-| AUTH-06 | — | Pending |
-| AUTH-07 | — | Pending |
-| PAT-01 | — | Pending |
-| PAT-02 | — | Pending |
-| PAT-03 | — | Pending |
-| PAT-04 | — | Pending |
-| PAT-05 | — | Pending |
-| PAT-06 | — | Pending |
-| DOC-01 | — | Pending |
-| DOC-02 | — | Pending |
-| DOC-03 | — | Pending |
-| DOC-04 | — | Pending |
-| SCH-01 | — | Pending |
-| SCH-02 | — | Pending |
-| SCH-03 | — | Pending |
-| SCH-04 | — | Pending |
-| SCH-05 | — | Pending |
-| SCH-06 | — | Pending |
-| SCH-07 | — | Pending |
-| EHR-01 | — | Pending |
-| EHR-02 | — | Pending |
-| EHR-03 | — | Pending |
-| EHR-04 | — | Pending |
-| EHR-05 | — | Pending |
-| EHR-06 | — | Pending |
-| EHR-07 | — | Pending |
-| EHR-08 | — | Pending |
-| EHR-09 | — | Pending |
-| BIL-01 | — | Pending |
-| BIL-02 | — | Pending |
-| BIL-03 | — | Pending |
-| BIL-04 | — | Pending |
-| BIL-05 | — | Pending |
-| BIL-06 | — | Pending |
-| BIL-07 | — | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Pending |
+| AUTH-05 | Phase 1 | Pending |
+| AUTH-06 | Phase 1 | Pending |
+| AUTH-07 | Phase 1 | Pending |
+| PAT-01 | Phase 2 | Pending |
+| PAT-02 | Phase 2 | Pending |
+| PAT-03 | Phase 2 | Pending |
+| PAT-04 | Phase 2 | Pending |
+| PAT-05 | Phase 2 | Pending |
+| PAT-06 | Phase 2 | Pending |
+| DOC-01 | Phase 3 | Pending |
+| DOC-02 | Phase 3 | Pending |
+| DOC-03 | Phase 3 | Pending |
+| DOC-04 | Phase 3 | Pending |
+| SCH-01 | Phase 4 | Pending |
+| SCH-02 | Phase 4 | Pending |
+| SCH-03 | Phase 4 | Pending |
+| SCH-04 | Phase 4 | Pending |
+| SCH-05 | Phase 4 | Pending |
+| SCH-06 | Phase 4 | Pending |
+| SCH-07 | Phase 4 | Pending |
+| EHR-01 | Phase 5 | Pending |
+| EHR-02 | Phase 5 | Pending |
+| EHR-03 | Phase 5 | Pending |
+| EHR-04 | Phase 5 | Pending |
+| EHR-05 | Phase 5 | Pending |
+| EHR-06 | Phase 5 | Pending |
+| EHR-07 | Phase 6 | Pending |
+| EHR-08 | Phase 6 | Pending |
+| EHR-09 | Phase 6 | Pending |
+| BIL-01 | Phase 7 | Pending |
+| BIL-02 | Phase 7 | Pending |
+| BIL-03 | Phase 8 | Pending |
+| BIL-04 | Phase 7 | Pending |
+| BIL-05 | Phase 7 | Pending |
+| BIL-06 | Phase 8 | Pending |
+| BIL-07 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 37 total
-- Mapped to phases: 0
-- Unmapped: 37 ⚠️
+- Mapped to phases: 37 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-13*
-*Last updated: 2026-07-13 after initial definition*
+*Last updated: 2026-07-13 after roadmap creation — traceability mapped*
