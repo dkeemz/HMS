@@ -1,7 +1,7 @@
 # Phase 1: Foundation & Authentication — Plan
 
 ## Goal
-Build the core application infrastructure: Next.js frontend, NestJS backend, PostgreSQL database, Keycloak integration, RBAC, MFA, audit logging, and break-glass workflow. All subsequent phases depend on this foundation.
+Build the core application infrastructure: FastAPI backend, HTMX frontend, PostgreSQL database, Keycloak integration, RBAC, MFA, audit logging, and break-glass workflow. All subsequent phases depend on this foundation.
 
 ## Requirements Coverage
 
@@ -21,20 +21,19 @@ Build the core application infrastructure: Next.js frontend, NestJS backend, Pos
 **Estimated effort:** Small
 **Depends on:** None
 
-- [ ] Initialize Next.js 15 project with TypeScript, App Router
-- [ ] Initialize NestJS 11 project with TypeScript
-- [ ] Set up Prisma ORM with PostgreSQL provider
-- [ ] Configure ESLint + Prettier (shared config)
-- [ ] Create monorepo structure (apps/web, apps/api, packages/shared)
+- [ ] Initialize FastAPI project with Python 3.12
+- [ ] Set up SQLAlchemy 2.x + Alembic for PostgreSQL
+- [ ] Configure Ruff (linting) + Black (formatting) + mypy (type checking)
+- [ ] Create project structure (app/, templates/, static/, tests/)
 - [ ] Add .env.example with all required variables
 - [ ] Add Docker Compose for local dev (PostgreSQL, Redis, Keycloak, Elasticsearch)
-- [ ] Verify: `npm run dev` starts both frontend and backend
+- [ ] Verify: `uvicorn app.main:app` starts backend, templates render correctly
 
 **Acceptance criteria:**
-- Frontend runs on port 3000
-- Backend runs on port 3001
+- Backend runs on port 8000
 - Database connects successfully
 - Linting passes with zero errors
+- Swagger docs available at /docs
 
 ---
 
@@ -42,14 +41,14 @@ Build the core application infrastructure: Next.js frontend, NestJS backend, Pos
 **Estimated effort:** Medium
 **Depends on:** Task 1
 
-- [ ] Design Prisma schema for: User, Role, Permission, UserRole, RolePermission
+- [ ] Design SQLAlchemy models for: User, Role, Permission, UserRole, RolePermission
 - [ ] Add User model fields: id (UUID), email (unique), firstName, lastName, passwordHash, status, lastLoginAt, createdAt, updatedAt
 - [ ] Add Role model: id, name (unique), description, isSystem (for predefined), createdAt
 - [ ] Add Permission model: id, resource, action, description
 - [ ] Add UserRole junction: userId, roleId, assignedBy, assignedAt
 - [ ] Add RolePermission junction: roleId, permissionId
 - [ ] Add AuditLog model: id, userId, action, resource, resourceId, metadata (JSONB), ipAddress, userAgent, timestamp, previousHash, hash (for chain integrity)
-- [ ] Create database migration
+- [ ] Create Alembic migration
 - [ ] Seed 15 predefined roles with permission hierarchy
 
 **Acceptance criteria:**
@@ -63,7 +62,7 @@ Build the core application infrastructure: Next.js frontend, NestJS backend, Pos
 **Estimated effort:** Large
 **Depends on:** Task 2
 
-- [ ] Install @nestjs-keycloak-connect and keycloak-connect packages
+- [ ] Install python-keycloak package
 - [ ] Configure Keycloak admin client for user/role sync
 - [ ] Create Keycloak realm configuration (HMS realm)
 - [ ] Set up JWT validation middleware (verify Keycloak tokens)
@@ -108,7 +107,7 @@ Build the core application infrastructure: Next.js frontend, NestJS backend, Pos
 **Estimated effort:** Large
 **Depends on:** Task 2, Task 3
 
-- [ ] Create RBAC guard for NestJS (role-based route protection)
+- [ ] Create RBAC dependency for FastAPI (role-based route protection)
 - [ ] Implement permission checking middleware
 - [ ] Create role assignment API: admin assigns → dept head approves
 - [ ] Add custom role creation (admin + dept head approval)
@@ -183,7 +182,7 @@ Build the core application infrastructure: Next.js frontend, NestJS backend, Pos
 - [ ] Create main layout: collapsible sidebar + header + content area
 - [ ] Implement sidebar navigation with icons + labels
 - [ ] Add header: global search, notifications bell, user menu
-- [ ] Build light/dark theme toggle (MUI native)
+- [ ] Build light/dark theme toggle (CSS class switching)
 - [ ] Implement responsive breakpoints (mobile <768px, tablet 768-1024px, desktop >1024px)
 - [ ] Add skeleton loaders for all pages
 - [ ] Add toast notification system
@@ -211,7 +210,7 @@ Build the core application infrastructure: Next.js frontend, NestJS backend, Pos
 - [ ] Build audit log viewer (search, filter, export)
 - [ ] Build break-glass management page
 - [ ] Add dashboard cards (user count, recent activity, security alerts)
-- [ ] Implement MUI DataGrid for all tables (sort, filter, pagination)
+- [ ] Implement server-side pagination for all tables
 
 **Acceptance criteria:**
 - Admin can create user in < 2 minutes
@@ -225,16 +224,16 @@ Build the core application infrastructure: Next.js frontend, NestJS backend, Pos
 **Estimated effort:** Medium
 **Depends on:** Task 3, Task 4, Task 5
 
-- [ ] POST /auth/login — authenticate user
-- [ ] POST /auth/logout — invalidate session
-- [ ] POST /auth/refresh — refresh access token
-- [ ] POST /auth/mfa/verify — verify MFA code
-- [ ] POST /auth/password/reset — request password reset
-- [ ] POST /auth/password/confirm — confirm password reset
-- [ ] GET /auth/me — get current user profile
-- [ ] PUT /auth/me — update current user profile
+- [ ] POST /api/v1/auth/login — authenticate user
+- [ ] POST /api/v1/auth/logout — invalidate session
+- [ ] POST /api/v1/auth/refresh — refresh access token
+- [ ] POST /api/v1/auth/mfa/verify — verify MFA code
+- [ ] POST /api/v1/auth/password/reset — request password reset
+- [ ] POST /api/v1/auth/password/confirm — confirm password reset
+- [ ] GET /api/v1/auth/me — get current user profile
+- [ ] PUT /api/v1/auth/me — update current user profile
 - [ ] Add rate limiting (10 req/min for auth endpoints)
-- [ ] Add request validation (Zod schemas)
+- [ ] Add request validation (Pydantic schemas)
 
 **Acceptance criteria:**
 - All endpoints return proper success/error responses
@@ -327,8 +326,8 @@ Task 1 (Scaffolding)
 ### Quality Gates
 - [ ] All tests pass
 - [ ] Lint passes with zero errors
-- [ ] TypeScript compilation succeeds
-- [ ] No security vulnerabilities (npm audit)
+- [ ] mypy type checking passes
+- [ ] No security vulnerabilities (pip-audit)
 - [ ] Audit logging verified
 - [ ] RBAC enforcement verified
 

@@ -52,7 +52,6 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 - Update Phase 1 PLAN.md for FastAPI/HTMX stack
-- Fix git push credentials issue
 
 ### Blockers/Concerns
 
