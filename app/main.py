@@ -32,3 +32,13 @@ app.include_router(v1_router, prefix=settings.API_V1_PREFIX, tags=["v1"])
 @app.get("/")
 async def root(request: Request):
     return templates.TemplateResponse(request, "index.html")
+
+
+@app.get("/admin/roles")
+async def admin_roles(request: Request):
+    return templates.TemplateResponse(request, "admin/roles.html")
+
+
+@app.get("/admin/permissions")
+async def admin_permissions(request: Request):
+    return templates.TemplateResponse(request, "admin/permissions.html")

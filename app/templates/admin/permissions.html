@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permission Management — HMS Admin</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        h1 { font-size: 1.75rem; margin-bottom: 1.5rem; color: #1a1a1a; }
+        h2 { font-size: 1.25rem; margin: 1.5rem 0 0.75rem; color: #333; }
+        .card { background: #fff; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #eee; }
+        th { font-weight: 600; background: #fafafa; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-resource { background: #e0e7ff; color: #3730a3; }
+        .badge-granted { background: #d1fae5; color: #065f46; }
+        .badge-revoked { background: #fee2e2; color: #991b1b; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-danger { background: #dc2626; color: #fff; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.875rem; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;
+        }
+        .search-bar { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .search-bar .form-group { flex: 1; margin-bottom: 0; }
+        .empty-state { text-align: center; padding: 3rem; color: #9ca3af; }
+        .resource-group { margin-bottom: 1.5rem; }
+        .resource-header { font-weight: 600; font-size: 1rem; padding: 0.5rem 0; border-bottom: 2px solid #e5e7eb; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Permission Management</h1>
+
+        <div id="notification"></div>
+
+        <div class="tabs" style="display:flex;gap:0;border-bottom:2px solid #e5e7eb;margin-bottom:1.5rem;">
+            <div class="tab active" style="padding:0.75rem 1.5rem;cursor:pointer;border-bottom:2px solid #2563eb;margin-bottom:-2px;font-weight:500;color:#2563eb;"
+                 onclick="showPermTab('list', this)">All Permissions</div>
+            <div class="tab" style="padding:0.75rem 1.5rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;color:#6b7280;"
+                 onclick="showPermTab('user', this)">User Lookup</div>
+            <div class="tab" style="padding:0.75rem 1.5rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;color:#6b7280;"
+                 onclick="showPermTab('overrides', this)">Overrides</div>
+        </div>
+
+        <!-- All Permissions -->
+        <div id="ptab-list" class="ptab-content">
+            <div class="card"
+                 hx-get="/api/v1/rbac/matrix"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+                <p>Loading permissions...</p>
+            </div>
+        </div>
+
+        <!-- User Permission Lookup -->
+        <div id="ptab-user" class="ptab-content" style="display:none">
+            <div class="card">
+                <h2>Look Up User Permissions</h2>
+                <div class="search-bar">
+                    <div class="form-group">
+                        <label for="lookup-user-id">User ID</label>
+                        <input type="text" id="lookup-user-id" placeholder="Enter user UUID">
+                    </div>
+                    <div style="display:flex;align-items:flex-end">
+                        <button class="btn btn-primary" onclick="lookupUser()">Search</button>
+                    </div>
+                </div>
+                <div id="user-perm-results"></div>
+            </div>
+        </div>
+
+        <!-- Permission Overrides -->
+        <div id="ptab-overrides" class="ptab-content" style="display:none">
+            <div class="card">
+                <h2>Manage Permission Overrides</h2>
+                <div class="form-group">
+                    <label for="override-user-id">User ID</label>
+                    <input type="text" id="override-user-id" placeholder="Enter user UUID">
+                </div>
+                <div class="form-group">
+                    <label for="override-perm-id">Permission ID</label>
+                    <input type="text" id="override-perm-id" placeholder="Enter permission UUID">
+                </div>
+                <div style="display:flex;gap:0.5rem">
+                    <button class="btn btn-primary" onclick="grantOverride()">Grant Override</button>
+                    <button class="btn btn-danger" onclick="revokeOverride()">Revoke Override</button>
+                </div>
+                <div id="override-results" style="margin-top:1rem"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showPermTab(name, el) {
+            document.querySelectorAll('.ptab-content').forEach(e => e.style.display = 'none');
+            document.querySelectorAll('.tab').forEach(e => {
+                e.style.borderBottomColor = 'transparent';
+                e.style.color = '#6b7280';
+                e.classList.remove('active');
+            });
+            document.getElementById('ptab-' + name).style.display = 'block';
+            el.style.borderBottomColor = '#2563eb';
+            el.style.color = '#2563eb';
+            el.classList.add('active');
+        }
+
+        function lookupUser() {
+            const userId = document.getElementById('lookup-user-id').value.trim();
+            if (!userId) return;
+            fetch(`/api/v1/rbac/users/${userId}/permissions`)
+                .then(r => r.json())
+                .then(data => {
+                    const el = document.getElementById('user-perm-results');
+                    if (!data.permissions || !data.permissions.length) {
+                        el.innerHTML = '<div class="empty-state">No permissions found for this user.</div>';
+                        return;
+                    }
+                    const bySource = {role: [], override: [], override_revoke: []};
+                    data.permissions.forEach(p => {
+                        const bucket = bySource[p.source] || bySource.role;
+                        bucket.push(p);
+                    });
+
+                    let html = '';
+                    if (bySource.override.length) {
+                        html += '<h2 style="margin-top:1rem;font-size:1rem">Override Permissions</h2>';
+                        html += renderPermTable(bySource.override);
+                    }
+                    if (bySource.role.length) {
+                        html += '<h2 style="margin-top:1rem;font-size:1rem">Role-Based Permissions</h2>';
+                        html += renderPermTable(bySource.role);
+                    }
+                    el.innerHTML = html;
+                });
+        }
+
+        function renderPermTable(perms) {
+            return `<table><thead><tr><th>Resource</th><th>Action</th><th>Source</th></tr></thead>
+                <tbody>${perms.map(p => `<tr>
+                    <td><span class="badge badge-resource">${esc(p.resource)}</span></td>
+                    <td>${esc(p.action)}</td>
+                    <td>${esc(p.source)}</td>
+                </tr>`).join('')}</tbody></table>`;
+        }
+
+        function grantOverride() {
+            const userId = document.getElementById('override-user-id').value.trim();
+            const permId = document.getElementById('override-perm-id').value.trim();
+            if (!userId || !permId) return;
+            fetch(`/api/v1/rbac/users/${userId}/permissions/override`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({permission_id: permId})
+            }).then(r => {
+                if (r.ok) {
+                    document.getElementById('override-results').innerHTML =
+                        '<div style="color:#065f46;padding:0.5rem">Override granted.</div>';
+                } else {
+                    r.json().then(d => {
+                        document.getElementById('override-results').innerHTML =
+                            `<div style="color:#991b1b;padding:0.5rem">${esc(d.detail || 'Error')}</div>`;
+                    });
+                }
+            });
+        }
+
+        function revokeOverride() {
+            const userId = document.getElementById('override-user-id').value.trim();
+            const permId = document.getElementById('override-perm-id').value.trim();
+            if (!userId || !permId) return;
+            fetch(`/api/v1/rbac/users/${userId}/permissions/override/${permId}`, {
+                method: 'DELETE'
+            }).then(r => {
+                if (r.ok) {
+                    document.getElementById('override-results').innerHTML =
+                        '<div style="color:#065f46;padding:0.5rem">Override revoked.</div>';
+                } else {
+                    r.json().then(d => {
+                        document.getElementById('override-results').innerHTML =
+                            `<div style="color:#991b1b;padding:0.5rem">${esc(d.detail || 'Error')}</div>`;
+                    });
+                }
+            });
+        }
+
+        // Render matrix on load
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            const target = event.detail.target;
+            const xhr = event.detail.xhr;
+            if (!xhr || !xhr.responseText) return;
+            let data;
+            try { data = JSON.parse(xhr.responseText); } catch(e) { return; }
+
+            if (data.permissions && data.roles) {
+                const byResource = {};
+                data.permissions.forEach(p => {
+                    if (!byResource[p.resource]) byResource[p.resource] = [];
+                    byResource[p.resource].push(p);
+                });
+
+                let html = '';
+                Object.entries(byResource).forEach(([resource, perms]) => {
+                    html += `<div class="resource-group"><div class="resource-header"><span class="badge badge-resource">${esc(resource)}</span></div>`;
+                    html += '<table><thead><tr><th>Action</th><th>Description</th>';
+                    data.roles.forEach(r => { html += `<th style="text-align:center;font-size:0.7rem">${esc(r.role_name)}</th>`; });
+                    html += '</tr></thead><tbody>';
+                    perms.forEach(p => {
+                        html += `<tr><td>${esc(p.action)}</td><td>${esc(p.description || '—')}</td>`;
+                        data.roles.forEach(r => {
+                            const has = r.permission_ids.includes(p.id);
+                            html += `<td style="text-align:center">${has ? '✓' : '—'}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                });
+                target.innerHTML = html;
+            }
+        });
+
+        function esc(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+    </script>
+</body>
+</html>

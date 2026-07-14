@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role Management — HMS Admin</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        h1 { font-size: 1.75rem; margin-bottom: 1.5rem; color: #1a1a1a; }
+        h2 { font-size: 1.25rem; margin: 1.5rem 0 0.75rem; color: #333; }
+        .card { background: #fff; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #eee; }
+        th { font-weight: 600; background: #fafafa; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-system { background: #e0e7ff; color: #3730a3; }
+        .badge-custom { background: #dcfce7; color: #166534; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-approved { background: #d1fae5; color: #065f46; }
+        .badge-rejected { background: #fee2e2; color: #991b1b; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-danger { background: #dc2626; color: #fff; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.875rem; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;
+        }
+        .form-row { display: flex; gap: 1rem; }
+        .form-row .form-group { flex: 1; }
+        .tabs { display: flex; gap: 0; border-bottom: 2px solid #e5e7eb; margin-bottom: 1.5rem; }
+        .tab { padding: 0.75rem 1.5rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; font-weight: 500; color: #6b7280; }
+        .tab.active { border-bottom-color: #2563eb; color: #2563eb; }
+        .perm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem; }
+        .perm-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 0.8rem; }
+        .perm-item input[type="checkbox"] { accent-color: #2563eb; }
+        .empty-state { text-align: center; padding: 3rem; color: #9ca3af; }
+        .alert { padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.875rem; }
+        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Role Management</h1>
+
+        <div id="notification"></div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('roles')">Roles</div>
+            <div class="tab" onclick="showTab('create')">Create Role</div>
+            <div class="tab" onclick="showTab('matrix')">Permission Matrix</div>
+            <div class="tab" onclick="showTab('approvals')">Approvals</div>
+        </div>
+
+        <!-- Role List -->
+        <div id="tab-roles" class="tab-content">
+            <div class="card"
+                 hx-get="/api/v1/rbac/roles"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+                <p>Loading roles...</p>
+            </div>
+        </div>
+
+        <!-- Create Role Form -->
+        <div id="tab-create" class="tab-content" style="display:none">
+            <div class="card">
+                <h2>Create Custom Role</h2>
+                <form id="create-role-form"
+                      hx-post="/api/v1/rbac/roles"
+                      hx-target="#notification"
+                      hx-swap="innerHTML"
+                      hx-on::after-request="if(event.detail.successful){document.getElementById('create-role-form').reset(); refreshRoles();}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">Role Name</label>
+                            <input type="text" id="name" name="name" required maxlength="50">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <input type="text" id="description" name="description" maxlength="255">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Permissions</label>
+                        <div id="permission-checkboxes" class="perm-grid"
+                             hx-get="/api/v1/rbac/matrix"
+                             hx-trigger="load"
+                             hx-swap="innerHTML">
+                            Loading permissions...
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Role</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Permission Matrix -->
+        <div id="tab-matrix" class="tab-content" style="display:none">
+            <div class="card"
+                 hx-get="/api/v1/rbac/matrix"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+                <p>Loading matrix...</p>
+            </div>
+        </div>
+
+        <!-- Pending Approvals -->
+        <div id="tab-approvals" class="tab-content" style="display:none">
+            <div class="card"
+                 hx-get="/api/v1/rbac/approvals"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+                <p>Loading approvals...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(name) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + name).style.display = 'block';
+            event.target.classList.add('active');
+        }
+
+        function refreshRoles() {
+            const el = document.getElementById('tab-roles').querySelector('.card');
+            if (el) htmx.trigger(el, 'reload');
+        }
+
+        // Render role list from JSON
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            const target = event.detail.target;
+            const xhr = event.detail.xhr;
+            if (!xhr || !xhr.response) return;
+
+            let data;
+            try { data = JSON.parse(xhr.responseText); } catch(e) { return; }
+
+            // Role list
+            if (target.id === 'tab-roles' || target.closest('#tab-roles')) {
+                if (data.roles) {
+                    target.innerHTML = renderRoleList(data.roles);
+                }
+            }
+
+            // Permission matrix
+            if (target.id === 'tab-matrix' || target.closest('#tab-matrix')) {
+                if (data.permissions && data.roles) {
+                    target.innerHTML = renderMatrix(data.permissions, data.roles);
+                }
+            }
+
+            // Approvals
+            if (target.id === 'tab-approvals' || target.closest('#tab-approvals')) {
+                if (Array.isArray(data)) {
+                    target.innerHTML = renderApprovals(data);
+                }
+            }
+
+            // Permission checkboxes for create form
+            if (target.id === 'permission-checkboxes') {
+                if (data.permissions) {
+                    target.innerHTML = data.permissions.map(p =>
+                        `<label class="perm-item">
+                            <input type="checkbox" name="permission_ids" value="${p.id}">
+                            <span>${p.resource}:${p.action}</span>
+                        </label>`
+                    ).join('');
+                }
+            }
+        });
+
+        function renderRoleList(roles) {
+            if (!roles.length) return '<div class="empty-state">No roles found.</div>';
+            return `<table>
+                <thead><tr><th>Name</th><th>Description</th><th>Permissions</th><th>Type</th></tr></thead>
+                <tbody>${roles.map(r => `<tr>
+                    <td><strong>${esc(r.name)}</strong></td>
+                    <td>${esc(r.description || '—')}</td>
+                    <td>${r.permission_count}</td>
+                    <td><span class="badge ${r.is_system ? 'badge-system' : 'badge-custom'}">${r.is_system ? 'System' : 'Custom'}</span></td>
+                </tr>`).join('')}</tbody>
+            </table>`;
+        }
+
+        function renderMatrix(permissions, roles) {
+            const byResource = {};
+            permissions.forEach(p => {
+                if (!byResource[p.resource]) byResource[p.resource] = [];
+                byResource[p.resource].push(p);
+            });
+
+            let html = '<table><thead><tr><th>Permission</th>';
+            roles.forEach(r => { html += `<th style="text-align:center;font-size:0.75rem">${esc(r.role_name)}</th>`; });
+            html += '</tr></thead><tbody>';
+
+            Object.entries(byResource).forEach(([resource, perms]) => {
+                perms.forEach(p => {
+                    html += `<tr><td>${esc(p.resource)}:${esc(p.action)}</td>`;
+                    roles.forEach(r => {
+                        const has = r.permission_ids.includes(p.id);
+                        html += `<td style="text-align:center">${has ? '✓' : '—'}</td>`;
+                    });
+                    html += '</tr>';
+                });
+            });
+
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function renderApprovals(approvals) {
+            if (!approvals.length) return '<div class="empty-state">No pending approvals.</div>';
+            return `<table>
+                <thead><tr><th>User Role</th><th>Requested By</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>${approvals.map(a => `<tr>
+                    <td>${esc(a.user_role_id)}</td>
+                    <td>${esc(a.requested_by)}</td>
+                    <td><span class="badge badge-pending">${esc(a.status)}</span></td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="resolveApproval('${a.id}','approved')">Approve</button>
+                        <button class="btn btn-danger btn-sm" onclick="resolveApproval('${a.id}','rejected')">Reject</button>
+                    </td>
+                </tr>`).join('')}</tbody>
+            </table>`;
+        }
+
+        function resolveApproval(id, decision) {
+            fetch(`/api/v1/rbac/approvals/${id}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({decision})
+            }).then(() => {
+                htmx.trigger('#tab-approvals .card', 'reload');
+            });
+        }
+
+        function esc(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+    </script>
+</body>
+</html>

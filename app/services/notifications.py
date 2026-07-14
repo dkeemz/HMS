@@ -70,3 +70,60 @@ class NotificationService:
         )
         # TODO: Integrate with email provider
         return True
+
+    @staticmethod
+    async def send_role_change_notification(
+        target_email: str, action: str, details: dict
+    ) -> bool:
+        """Notify user of a role assignment or removal."""
+        logger.info(
+            "ROLE CHANGE NOTIFICATION → %s | action=%s details=%s",
+            target_email,
+            action,
+            details,
+        )
+        # TODO: Integrate with email provider
+        return True
+
+    @staticmethod
+    async def send_permission_change_notification(
+        target_email: str, action: str, details: dict
+    ) -> bool:
+        """Notify user of a permission override grant or revoke."""
+        logger.info(
+            "PERMISSION CHANGE NOTIFICATION → %s | action=%s details=%s",
+            target_email,
+            action,
+            details,
+        )
+        # TODO: Integrate with email provider
+        return True
+
+    @staticmethod
+    async def send_compliance_notification(
+        compliance_email: str, action: str, details: dict
+    ) -> bool:
+        """Notify compliance officer of sensitive RBAC changes."""
+        logger.info(
+            "COMPLIANCE NOTIFICATION → %s | action=%s details=%s",
+            compliance_email,
+            action,
+            details,
+        )
+        # TODO: Integrate with email provider
+        return True
+
+    @staticmethod
+    async def send_temporary_elevation_notification(
+        target_email: str, role_name: str, duration_hours: int, expires_at: str
+    ) -> bool:
+        """Notify user of temporary role elevation."""
+        logger.info(
+            "TEMPORARY ELEVATION NOTIFICATION → %s | role=%s duration=%dh expires=%s",
+            target_email,
+            role_name,
+            duration_hours,
+            expires_at,
+        )
+        # TODO: Integrate with email provider
+        return True
