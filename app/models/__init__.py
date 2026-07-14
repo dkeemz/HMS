@@ -1,5 +1,7 @@
 from app.models.account_lockout import AccountLockout
 from app.models.audit_log import AuditLog
+from app.models.break_glass import BreakGlassAccess
+from app.models.break_glass_audit import BreakGlassAudit
 from app.models.password_history import PasswordHistory
 from app.models.password_reset import PasswordResetToken
 from app.models.permission import Permission
@@ -15,6 +17,8 @@ from app.models.user_role import UserRole
 __all__ = [
     "AccountLockout",
     "AuditLog",
+    "BreakGlassAccess",
+    "BreakGlassAudit",
     "PasswordHistory",
     "PasswordResetToken",
     "Permission",

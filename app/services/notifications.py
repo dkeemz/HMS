@@ -127,3 +127,42 @@ class NotificationService:
         )
         # TODO: Integrate with email provider
         return True
+
+    @staticmethod
+    async def send_break_glass_request_notification(
+        recipient_email: str, details: dict,
+    ) -> bool:
+        """Notify admin / compliance / dept head of a new break-glass request."""
+        logger.info(
+            "BREAK-GLASS REQUEST NOTIFICATION → %s | details=%s",
+            recipient_email,
+            details,
+        )
+        # TODO: Integrate with email provider
+        return True
+
+    @staticmethod
+    async def send_break_glass_approved_notification(
+        doctor_email: str, details: dict,
+    ) -> bool:
+        """Notify the requesting doctor that access was approved."""
+        logger.info(
+            "BREAK-GLASS APPROVED NOTIFICATION → %s | details=%s",
+            doctor_email,
+            details,
+        )
+        # TODO: Integrate with email provider
+        return True
+
+    @staticmethod
+    async def send_break_glass_denied_notification(
+        doctor_email: str, details: dict,
+    ) -> bool:
+        """Notify the requesting doctor that access was denied."""
+        logger.info(
+            "BREAK-GLASS DENIED NOTIFICATION → %s | details=%s",
+            doctor_email,
+            details,
+        )
+        # TODO: Integrate with email provider
+        return True

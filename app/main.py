@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.api.v1.router import router as v1_router
 from app.core.config import settings
+from app.middleware.audit import AuditMiddleware
 from app.middleware.session import SessionTimeoutMiddleware
 
 app = FastAPI(
@@ -20,6 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(AuditMiddleware)
 app.add_middleware(SessionTimeoutMiddleware)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -42,3 +44,18 @@ async def admin_roles(request: Request):
 @app.get("/admin/permissions")
 async def admin_permissions(request: Request):
     return templates.TemplateResponse(request, "admin/permissions.html")
+
+
+@app.get("/admin/audit")
+async def admin_audit(request: Request):
+    return templates.TemplateResponse(request, "admin/audit.html")
+
+
+@app.get("/admin/audit/integrity")
+async def admin_audit_integrity(request: Request):
+    return templates.TemplateResponse(request, "admin/audit-integrity.html")
+
+
+@app.get("/admin/break-glass")
+async def admin_break_glass(request: Request):
+    return templates.TemplateResponse(request, "admin/break_glass.html")

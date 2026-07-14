@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Break-Glass Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Break-Glass Emergency Access Dashboard</h1>
+
+    <!-- Tabs -->
+    <div class="flex gap-4 mb-6 border-b pb-2">
+        <button class="tab-btn px-4 py-2 font-medium" onclick="showTab('pending')" id="tab-pending">
+            Pending Requests
+        </button>
+        <button class="tab-btn px-4 py-2 font-medium" onclick="showTab('history')" id="tab-history">
+            Access History
+        </button>
+        <button class="tab-btn px-4 py-2 font-medium" onclick="showTab('alerts')" id="tab-alerts">
+            Frequency Alerts
+        </button>
+        <button class="tab-btn px-4 py-2 font-medium" onclick="showTab('reviews')" id="tab-reviews">
+            Compliance Reviews
+        </button>
+    </div>
+
+    <!-- Pending Requests -->
+    <div id="section-pending" class="section">
+        <h2 class="text-lg font-semibold mb-3">Pending Break-Glass Requests</h2>
+        <div id="pending-list"
+             hx-get="/api/v1/break-glass/pending"
+             hx-trigger="load, every 30s"
+             hx-swap="innerHTML"
+             class="bg-white shadow rounded-lg p-4">
+            <p class="text-gray-500">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Access History -->
+    <div id="section-history" class="section hidden">
+        <h2 class="text-lg font-semibold mb-3">Access History</h2>
+        <div class="flex gap-4 mb-4">
+            <input type="text" id="filter-doctor" placeholder="Doctor ID"
+                   class="border rounded px-3 py-2 text-sm" />
+            <input type="text" id="filter-patient" placeholder="Patient ID"
+                   class="border rounded px-3 py-2 text-sm" />
+            <select id="filter-status" class="border rounded px-3 py-2 text-sm">
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="denied">Denied</option>
+                <option value="expired">Expired</option>
+            </select>
+            <button hx-get="/api/v1/break-glass/history"
+                    hx-include="#filter-doctor, #filter-patient, #filter-status"
+                    hx-target="#history-table-body"
+                    hx-swap="innerHTML"
+                    class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+                Search
+            </button>
+        </div>
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-4 py-3 text-left">ID</th>
+                        <th class="px-4 py-3 text-left">Doctor</th>
+                        <th class="px-4 py-3 text-left">Patient</th>
+                        <th class="px-4 py-3 text-left">Status</th>
+                        <th class="px-4 py-3 text-left">Reason</th>
+                        <th class="px-4 py-3 text-left">Created</th>
+                        <th class="px-4 py-3 text-left">Audit</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                    <tr><td colspan="7" class="px-4 py-3 text-gray-500">Click Search to load data.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Frequency Alerts -->
+    <div id="section-alerts" class="section hidden">
+        <h2 class="text-lg font-semibold mb-3">Frequency Alerts (>&gt;3 requests/week)</h2>
+        <div id="alerts-list"
+             hx-get="/api/v1/break-glass/alerts"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             class="bg-white shadow rounded-lg p-4">
+            <p class="text-gray-500">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Compliance Reviews -->
+    <div id="section-reviews" class="section hidden">
+        <h2 class="text-lg font-semibold mb-3">Pending Compliance Reviews (24h deadline)</h2>
+        <div id="reviews-list"
+             hx-get="/api/v1/break-glass/pending-reviews"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             class="bg-white shadow rounded-lg p-4">
+            <p class="text-gray-500">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="review-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold mb-4">Compliance Review</h3>
+            <input type="hidden" id="review-break-glass-id" />
+            <textarea id="review-notes" rows="4"
+                      class="w-full border rounded px-3 py-2 text-sm mb-4"
+                      placeholder="Enter review notes..."></textarea>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeReviewModal()"
+                        class="px-4 py-2 border rounded text-sm hover:bg-gray-100">
+                    Cancel
+                </button>
+                <button onclick="submitReview()"
+                        class="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700">
+                    Submit Review
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deny Modal -->
+    <div id="deny-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold mb-4">Deny Break-Glass Request</h3>
+            <input type="hidden" id="deny-break-glass-id" />
+            <textarea id="deny-reason" rows="3"
+                      class="w-full border rounded px-3 py-2 text-sm mb-4"
+                      placeholder="Reason for denial..."></textarea>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeDenyModal()"
+                        class="px-4 py-2 border rounded text-sm hover:bg-gray-100">
+                    Cancel
+                </button>
+                <button onclick="submitDeny()"
+                        class="px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700">
+                    Deny Request
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Trail Modal -->
+    <div id="audit-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <h3 class="text-lg font-semibold mb-4">Audit Trail</h3>
+            <div id="audit-trail-content" class="text-sm"></div>
+            <div class="flex justify-end mt-4">
+                <button onclick="closeAuditModal()"
+                        class="px-4 py-2 border rounded text-sm hover:bg-gray-100">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tab-btn.active { border-bottom: 2px solid #2563eb; color: #2563eb; }
+    .status-pending { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
+    .status-approved { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
+    .status-denied { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
+    .status-expired { background: #e5e7eb; color: #374151; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
+</style>
+
+<script>
+function showTab(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + name).classList.remove('hidden');
+    document.getElementById('tab-' + name).classList.add('active');
+}
+showTab('pending');
+
+function approveRequest(id) {
+    if (!confirm('Approve this break-glass request?')) return;
+    fetch('/api/v1/break-glass/' + id + '/approve', { method: 'POST' })
+        .then(r => r.json())
+        .then(() => { htmx.trigger('#pending-list', 'load'); });
+}
+
+function openDenyModal(id) {
+    document.getElementById('deny-break-glass-id').value = id;
+    document.getElementById('deny-reason').value = '';
+    document.getElementById('deny-modal').classList.remove('hidden');
+}
+function closeDenyModal() { document.getElementById('deny-modal').classList.add('hidden'); }
+function submitDeny() {
+    const id = document.getElementById('deny-break-glass-id').value;
+    const reason = document.getElementById('deny-reason').value;
+    if (!reason || reason.length < 5) { alert('Denial reason must be at least 5 characters.'); return; }
+    fetch('/api/v1/break-glass/' + id + '/deny', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason })
+    }).then(r => r.json())
+      .then(() => { closeDenyModal(); htmx.trigger('#pending-list', 'load'); });
+}
+
+function openReviewModal(id) {
+    document.getElementById('review-break-glass-id').value = id;
+    document.getElementById('review-notes').value = '';
+    document.getElementById('review-modal').classList.remove('hidden');
+}
+function closeReviewModal() { document.getElementById('review-modal').classList.add('hidden'); }
+function submitReview() {
+    const id = document.getElementById('review-break-glass-id').value;
+    const notes = document.getElementById('review-notes').value;
+    if (!notes || notes.length < 10) { alert('Review notes must be at least 10 characters.'); return; }
+    fetch('/api/v1/break-glass/' + id + '/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes })
+    }).then(r => r.json())
+      .then(() => { closeReviewModal(); htmx.trigger('#reviews-list', 'load'); });
+}
+
+function showAuditTrail(id) {
+    fetch('/api/v1/break-glass/' + id + '/audit')
+        .then(r => r.json())
+        .then(data => {
+            let html = '<table class="w-full"><thead><tr class="border-b"><th class="text-left py-2">Action</th><th class="text-left py-2">User</th><th class="text-left py-2">Time</th><th class="text-left py-2">Details</th></tr></thead><tbody>';
+            data.entries.forEach(e => {
+                html += '<tr class="border-b"><td class="py-2"><span class="status-' + e.action + '">' + e.action + '</span></td><td class="py-2">' + e.user_id.substring(0,8) + '...</td><td class="py-2">' + (e.timestamp || '') + '</td><td class="py-2">' + JSON.stringify(e.details || {}) + '</td></tr>';
+            });
+            html += '</tbody></table>';
+            if (data.entries.length === 0) html = '<p class="text-gray-500">No audit entries found.</p>';
+            document.getElementById('audit-trail-content').innerHTML = html;
+            document.getElementById('audit-modal').classList.remove('hidden');
+        });
+}
+function closeAuditModal() { document.getElementById('audit-modal').classList.add('hidden'); }
+
+function statusClass(s) { return 'status-' + s; }
+</script>
+{% endblock %}
