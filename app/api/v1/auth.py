@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +13,7 @@ from app.core.deps import CurrentUser
 from app.core.security import compute_device_fingerprint, sync_user_from_keycloak
 from app.core.session import create_session, invalidate_all_sessions
 from app.models.session import UserSession
+from app.models.user import User
 from app.schemas.auth import (
     LoginRequest,
     LogoutRequest,
@@ -22,6 +23,8 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.services.keycloak import KeycloakService
+from app.services.notifications import NotificationService
+from app.services.password_policy import PasswordPolicyService
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +51,49 @@ async def login(
     Returns tokens on success, or an MFA challenge if the user's device
     fingerprint is new (conditional MFA enforcement).
     """
-    token_data = kc.get_token(username=body.email, password=body.password)
+    # Check account lockout before attempting authentication
+    existing_user_result = await db.execute(
+        select(User).where(User.email == body.email)
+    )
+    existing_user = existing_user_result.scalar_one_or_none()
+
+    if existing_user is not None:
+        is_locked, locked_until = await PasswordPolicyService.check_account_lockout(
+            db, existing_user.id
+        )
+        if is_locked:
+            await NotificationService.send_account_locked_notification(
+                existing_user.email
+            )
+            raise HTTPException(
+                status_code=403,
+                detail="Account locked. Try again later.",
+            )
+
+    # Attempt Keycloak authentication
+    try:
+        token_data = kc.get_token(username=body.email, password=body.password)
+    except Exception:
+        # Record failed attempt if user exists
+        if existing_user is not None:
+            is_now_locked, locked_until = (
+                await PasswordPolicyService.record_failed_attempt(
+                    db, existing_user.id
+                )
+            )
+            await db.commit()
+            if is_now_locked:
+                await NotificationService.send_account_locked_notification(
+                    existing_user.email
+                )
+                raise HTTPException(
+                    status_code=403,
+                    detail="Account locked due to too many failed attempts.",
+                )
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password.",
+        )
 
     access_token = token_data["access_token"]
     refresh_token = token_data["refresh_token"]
@@ -66,7 +111,9 @@ async def login(
     }
     user = await sync_user_from_keycloak(db, payload)
     user.last_login_at = datetime.now(UTC)
-    await db.flush()
+
+    # Clear failed attempts on successful login
+    await PasswordPolicyService.clear_failed_attempts(db, user.id)
 
     # Device fingerprint for conditional MFA
     user_agent = request.headers.get("user-agent", "")
@@ -94,6 +141,12 @@ async def login(
     await db.commit()
 
     if is_new_device:
+        # Notify user of new device login
+        await NotificationService.send_login_notification(
+            user.email,
+            {"user_agent": user_agent, "ip_address": ip_address},
+            is_new_device=True,
+        )
         # Prompt for MFA on new device
         return MFAChallengeResponse(
             session_id=str(session.id),
