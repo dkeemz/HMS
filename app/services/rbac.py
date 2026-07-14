@@ -176,6 +176,14 @@ class RBACService:
             user_id,
             ur.status,
         )
+
+        await RBACService._notify_permission_change(
+            db,
+            user_id,
+            "role_assigned",
+            {"role_id": str(role_id), "role_name": role.name, "status": ur.status},
+        )
+
         return ur
 
     @staticmethod
@@ -248,6 +256,13 @@ class RBACService:
 
         await db.flush()
 
+        await RBACService._notify_permission_change(
+            db,
+            user_id,
+            "role_revoked",
+            {"role_id": str(role_id)},
+        )
+
     # ── Custom role creation ─────────────────────────────────────────────
 
     @staticmethod
@@ -260,18 +275,31 @@ class RBACService:
     ) -> Role:
         """Create a custom role with specific permissions.
 
-        Custom roles are non-system roles that can be assigned to users.
+        Custom roles are non-system roles that require admin + dept head
+        approval before becoming active.  The role is created with
+        ``status="pending_approval"`` and a ``RoleAssignmentApproval``
+        record is created to track the approval process.
         """
         existing = await db.execute(select(Role).where(Role.name == name))
         if existing.scalar_one_or_none() is not None:
             raise ValueError(f"Role '{name}' already exists")
 
-        role = Role(name=name, description=description, is_system=False)
+        role = Role(
+            name=name, description=description, is_system=False,
+            status="pending_approval",
+        )
         db.add(role)
         await db.flush()
 
         for pid in permission_ids:
             db.add(RolePermission(role_id=role.id, permission_id=pid))
+
+        approval = RoleAssignmentApproval(
+            role_id=role.id,
+            status="pending",
+            requested_by=created_by,
+        )
+        db.add(approval)
 
         await RBACService._audit_log(
             db,
@@ -282,12 +310,89 @@ class RBACService:
             extra_data={
                 "role_name": name,
                 "permission_count": len(permission_ids),
+                "status": "pending_approval",
             },
         )
 
         await db.flush()
-        logger.info("Custom role '%s' created by user %s", name, created_by)
+        logger.info(
+            "Custom role '%s' created by user %s (pending approval)",
+            name, created_by,
+        )
+
+        await RBACService._notify_permission_change(
+            db,
+            created_by,
+            "role_created",
+            {"role_id": str(role.id), "role_name": name, "status": "pending_approval"},
+        )
+
         return role
+
+    @staticmethod
+    async def approve_custom_role(
+        db: AsyncSession,
+        approval_id: uuid.UUID,
+        approved_by: uuid.UUID,
+        decision: str = "approved",
+        approver_role: str = "",
+    ) -> RoleAssignmentApproval:
+        """Approve or reject a custom role creation.
+
+        Requires both admin and department-head approval.  The role only
+        becomes active once both have approved.
+        """
+        approval = await db.get(RoleAssignmentApproval, approval_id)
+        if approval is None:
+            raise ValueError("Approval record not found")
+        if approval.status not in ("pending", "partial"):
+            raise ValueError("Approval already resolved")
+        if approval.role_id is None:
+            raise ValueError("This approval is not for a custom role")
+
+        is_admin = approver_role in ("Admin", "System Administrator")
+        is_dept_head = approver_role == "Department Head"
+
+        if is_admin:
+            approval.admin_approved = decision == "approved"
+        elif is_dept_head:
+            approval.dept_head_approved = decision == "approved"
+        else:
+            raise ValueError("Only Admin or Department Head can approve custom roles")
+
+        if decision == "rejected":
+            approval.status = "rejected"
+            approval.approved_by = approved_by
+            approval.resolved_at = datetime.now(UTC)
+            role = await db.get(Role, approval.role_id)
+            if role is not None:
+                role.status = "rejected"
+        elif approval.admin_approved and approval.dept_head_approved:
+            approval.status = "approved"
+            approval.approved_by = approved_by
+            approval.resolved_at = datetime.now(UTC)
+            role = await db.get(Role, approval.role_id)
+            if role is not None:
+                role.status = "active"
+        else:
+            approval.status = "partial"
+            approval.approved_by = approved_by
+
+        await RBACService._audit_log(
+            db,
+            user_id=approved_by,
+            action=f"custom_role_{decision}",
+            resource="role",
+            resource_id=str(approval.role_id),
+            extra_data={
+                "approval_id": str(approval_id),
+                "admin_approved": approval.admin_approved,
+                "dept_head_approved": approval.dept_head_approved,
+            },
+        )
+
+        await db.flush()
+        return approval
 
     @staticmethod
     async def assign_permission_to_role(
@@ -694,9 +799,10 @@ class RBACService:
         """Send notification for permission/role changes.
 
         Notifies the affected user and, for sensitive changes, the compliance
-        officer.  In production this would send emails; currently it logs.
+        officer via NotificationService (email delivery).
         """
         from app.models.user import User
+        from app.services.notifications import NotificationService
 
         target = await db.get(User, target_user_id)
         if target:
@@ -706,11 +812,30 @@ class RBACService:
                 action,
                 details,
             )
+            role_actions = {
+                "role_assigned", "role_revoked", "role_created",
+                "custom_role_approved", "custom_role_rejected",
+            }
+            if action in role_actions:
+                await NotificationService.send_role_change_notification(
+                    target.email, action, details,
+                )
+            elif action == "temporary_role_elevation":
+                await NotificationService.send_temporary_elevation_notification(
+                    target.email,
+                    details.get("role_name", ""),
+                    details.get("duration_hours", 0),
+                    details.get("expires_at", ""),
+                )
+            else:
+                await NotificationService.send_permission_change_notification(
+                    target.email, action, details,
+                )
 
-        # Notify compliance officer for sensitive changes
         sensitive_actions = {
             "role_assigned",
             "role_revoked",
+            "role_created",
             "permission_override_granted",
             "permission_override_revoked",
             "temporary_role_elevation",
@@ -729,6 +854,9 @@ class RBACService:
                     co_email,
                     action,
                     target.email if target else target_user_id,
+                )
+                await NotificationService.send_compliance_notification(
+                    co_email, action, details,
                 )
 
     # ── Internal helpers ─────────────────────────────────────────────────

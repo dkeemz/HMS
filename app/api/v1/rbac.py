@@ -473,6 +473,101 @@ async def resolve_approval(
     )
 
 
+# ── Custom role approval ────────────────────────────────────────────────
+
+
+@router.get(
+    "/role-approvals",
+    response_model=list[ApprovalResponse],
+)
+async def list_pending_role_approvals(
+    current_user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+):
+    """List pending custom role creation approvals."""
+    from app.models.role_approval import RoleAssignmentApproval
+
+    result = await db.execute(
+        select(RoleAssignmentApproval)
+        .where(
+            (RoleAssignmentApproval.status.in_(["pending", "partial"]))
+            & (RoleAssignmentApproval.role_id.isnot(None))
+        )
+        .order_by(RoleAssignmentApproval.created_at.desc())
+    )
+    approvals = result.scalars().all()
+
+    return [
+        ApprovalResponse(
+            id=str(a.id),
+            user_role_id=str(a.user_role_id) if a.user_role_id else None,
+            status=a.status,
+            requested_by=str(a.requested_by),
+            approved_by=str(a.approved_by) if a.approved_by else None,
+            created_at=a.created_at,
+            resolved_at=a.resolved_at,
+        )
+        for a in approvals
+    ]
+
+
+@router.post(
+    "/role-approvals/{approval_id}",
+    response_model=ApprovalResponse,
+)
+async def approve_custom_role(
+    approval_id: uuid.UUID,
+    body: ApprovalDecision,
+    current_user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+):
+    """Approve or reject a custom role creation (admin or dept head)."""
+    from app.models.role import Role
+    from app.models.user_role import UserRole
+
+    role_result = await db.execute(
+        select(Role.name)
+        .join(UserRole, UserRole.role_id == Role.id)
+        .where(
+            (UserRole.user_id == current_user.id)
+            & (UserRole.status == "approved")
+        )
+        .distinct()
+    )
+    approver_roles = [r[0] for r in role_result.all()]
+
+    approver_role = ""
+    for r in ("Admin", "System Administrator", "Department Head"):
+        if r in approver_roles:
+            approver_role = r
+            break
+
+    try:
+        approval = await RBACService.approve_custom_role(
+            db,
+            approval_id=approval_id,
+            approved_by=current_user.id,
+            decision=body.decision,
+            approver_role=approver_role,
+        )
+        await db.commit()
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+    return ApprovalResponse(
+        id=str(approval.id),
+        user_role_id=str(approval.user_role_id) if approval.user_role_id else None,
+        status=approval.status,
+        requested_by=str(approval.requested_by),
+        approved_by=str(approval.approved_by) if approval.approved_by else None,
+        created_at=approval.created_at,
+        resolved_at=approval.resolved_at,
+    )
+
+
 # ── Permission matrix ────────────────────────────────────────────────────
 
 
