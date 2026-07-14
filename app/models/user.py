@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 if TYPE_CHECKING:
+    from app.models.session import UserSession
     from app.models.user_role import UserRole
 
 
@@ -44,3 +45,4 @@ class User(Base):
     )
 
     roles: Mapped[list[UserRole]] = relationship(back_populates="user")
+    sessions: Mapped[list[UserSession]] = relationship(back_populates="user")

@@ -1,4 +1,3 @@
-
 from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
@@ -15,10 +14,18 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # Keycloak OIDC settings
     KEYCLOAK_SERVER_URL: str = "http://localhost:8080"
     KEYCLOAK_REALM: str = "hms"
     KEYCLOAK_CLIENT_ID: str = "hms-backend"
     KEYCLOAK_CLIENT_SECRET: str = "change-me"
+    KEYCLOAK_ADMIN_USERNAME: str = "admin"
+    KEYCLOAK_ADMIN_PASSWORD: str = "change-me"
+
+    # Session settings
+    SESSION_TIMEOUT_MINUTES: int = 15
+    MAX_CONCURRENT_SESSIONS_DEFAULT: int = 3
+    MAX_CONCURRENT_SESSIONS_DOCTOR: int = 5
 
     ELASTICSEARCH_URL: str = "http://localhost:9200"
 

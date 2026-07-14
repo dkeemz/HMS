@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.api.v1.router import router as v1_router
 from app.core.config import settings
+from app.middleware.session import SessionTimeoutMiddleware
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -18,6 +19,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(SessionTimeoutMiddleware)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
