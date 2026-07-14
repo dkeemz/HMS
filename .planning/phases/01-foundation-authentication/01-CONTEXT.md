@@ -52,3 +52,82 @@
 - **Post-Access Review:** 24-hour compliance review (every break-glass access)
 - **Audit Trail:** Full — who requested, who approved, reason, time accessed, data viewed, review outcome
 - **Abuse Prevention:** Frequency alerts (if same user requests >3 times/week)
+
+### Area 5: UI/UX Design
+
+- **Design System:** Material UI (MUI)
+- **Navigation:** Collapsible sidebar with icons + labels
+- **Color Scheme:** Medical blue primary (#1565C0), clean whites/grays
+- **Theme:** Light mode default + dark mode toggle (MUI native)
+- **Dashboard:** Card grid layout (KPI cards, charts, recent activity)
+- **Mobile:** Responsive web (3 breakpoints: mobile <768px, tablet 768-1024px, desktop >1024px)
+- **Forms:** Multi-step forms with progress indicators
+- **Data Display:** MUI DataGrid with sort, filter, pagination
+- **Notifications:** Toast notifications for actions + bell icon for alerts
+- **Loading States:** Skeleton loaders
+- **Error States:** Inline field errors + toast for server errors
+- **Empty States:** Illustration + CTA button
+- **Typography:** Roboto font family
+- **Icons:** MUI Icons (Material Design)
+- **Search:** Global search bar + module-specific search
+- **Breadcrumbs:** Displayed for nested pages
+- **Confirmations:** Modal dialog for destructive actions
+- **Charts:** Recharts library
+- **Date Pickers:** MUI Date Pickers (dayjs)
+- **Tabs:** MUI Tabs for switching views
+- **Page Transitions:** Animated (fade/slide)
+- **Table Mobile:** Horizontal scroll
+- **Sidebar Mobile:** Slide-in drawer from left
+- **Accessibility:** WCAG AAA, full keyboard navigation, full ARIA support, 7:1 contrast ratio
+- **Print Styles:** Print-optimized styles for reports, prescriptions, invoices
+- **Localization:** English + Nigerian languages (Hausa, Yoruba, Igbo) + i18n framework
+
+### Area 6: Staff Attendance
+
+- **Clock In/Out:** Web-based with IP/location verification
+- **Shift Tracking:** Schedule-based (clock-in validates against schedule)
+- **Overtime:** Auto-calculate based on hours worked beyond standard shift
+- **Breaks:** Auto-deduct based on shift length
+- **Reports:** Daily, weekly, monthly summaries with export
+- **Leave Management:** Staff request leave, manager approve (annual, sick, etc. with balances)
+- **Attendance Alerts:** Auto-alert manager for late, absent, early departure
+- **Shift Swaps:** Staff request swap, manager approve (both staff must agree)
+- **History Visibility:** Role-based (staff see own, managers see department, admin sees all)
+
+### Area 7: Servicom & Customer Feedback
+
+- **Scope:** Full Servicom (complaints, service requests, feedback tracking, resolution workflow)
+- **Channels:** Multi-channel (web form, SMS, email, phone manual entry)
+- **Categories:** Predefined + admin can add custom categories later
+- **Workflow:** Full (Complaint → Assigned → Investigating → Resolved → Closed)
+- **SLA:** Auto-escalation for complaints not resolved within SLA (24h urgent, 72h normal)
+- **Surveys:** Post-visit survey (1-5 stars + comments) via SMS/email + in-app feedback button
+- **Analytics:** Trend analysis, category breakdown, sentiment scoring, department comparison
+- **Anonymous:** Allow anonymous complaints
+- **Notifications:** Auto-notify patient at each stage (assigned, investigating, resolved)
+- **Priority:** 4 levels (Low, Medium, High, Critical) based on category and severity
+- **Reporting:** Dashboard + scheduled monthly reports with export
+
+### Area 8: Data Entities & Models
+
+**People & Organization:**
+- User, Patient, Doctor, Nurse, Staff, Department, Role, Permission
+
+**Scheduling & Resources:**
+- Appointment, Schedule, Shift, Bed, Ward, Room
+
+**Clinical (EHR):**
+- Encounter, Vitals, Diagnosis, Prescription, Lab Order, Lab Result, Allergy, Problem, Imaging, Referral, Immunization, Procedure
+
+**Billing:**
+- Invoice, Line Item, Payment, Insurance, Claim, Tariff, Payment Method, Contract, Payment Plan, Collection
+
+**Servicom:**
+- Complaint, Feedback, Survey, Resolution, SLA
+
+**Staff Attendance:**
+- Attendance Record, Shift Swap, Leave Request, Overtime
+
+**Relationships:**
+- Standard: Patient has many Appointments/Encounters/Invoices, Doctor has many Appointments/Encounters, Department has many Doctors/Patients
+- Complex: Patient-Doctor assignment, Care teams, Referral chains
