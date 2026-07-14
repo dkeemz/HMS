@@ -323,6 +323,26 @@ const doc = new Document({
                 }),
               ]
             }),
+            new TableRow({
+              children: [
+                new TableCell({
+                  borders, width: { size: 4680, type: WidthType.DXA }, margins: cellMargins,
+                  shading: { fill: WHITE, type: ShadingType.CLEAR },
+                  children: [
+                    new Paragraph({ spacing: { after: 80 }, children: [new TextRun({ text: "Staff Attendance & Scheduling", bold: true, size: 22, color: PRIMARY })] }),
+                    new Paragraph({ children: [new TextRun({ text: "Web-based clock-in with IP/location tracking. Shift management, overtime calculation, leave requests, and shift swaps. Auto-notify managers.", size: 20 })] })
+                  ]
+                }),
+                new TableCell({
+                  borders, width: { size: 4680, type: WidthType.DXA }, margins: cellMargins,
+                  shading: { fill: WHITE, type: ShadingType.CLEAR },
+                  children: [
+                    new Paragraph({ spacing: { after: 80 }, children: [new TextRun({ text: "Servicom (Customer Service)", bold: true, size: 22, color: PRIMARY })] }),
+                    new Paragraph({ children: [new TextRun({ text: "Full complaint lifecycle tracking. Multi-channel intake (web, SMS, email). Auto-escalation SLA. Post-visit surveys and feedback collection.", size: 20 })] })
+                  ]
+                }),
+              ]
+            }),
           ]
         }),
 
@@ -469,6 +489,8 @@ const doc = new Document({
               ["6", "EHR Clinical Lists", "Problem lists, medications, allergies", "2 weeks"],
               ["7", "Billing Foundation", "Charge capture, invoicing, payments", "3 weeks"],
               ["8", "Billing & Revenue", "Insurance claims, reporting, analytics", "3 weeks"],
+              ["9", "Staff Attendance", "Clock-in/out, shift management, overtime, leave, shift swaps", "3 weeks"],
+              ["10", "Servicom", "Complaints, feedback, surveys, SLA escalation", "3 weeks"],
             ].map((row, i) => new TableRow({
               children: [
                 new TableCell({
@@ -526,6 +548,8 @@ const doc = new Document({
               ["Patient Wait Times", "40% reduction"],
               ["Staff Productivity", "35% improvement"],
               ["Patient Satisfaction (HCAHPS)", "25% improvement"],
+              ["Attendance Admin Overhead", "70% reduction (automated tracking)"],
+              ["Complaint Resolution Time", "50% faster (automated SLA)"],
               ["Annual Cost Savings", "$1.8-2.4 million"],
               ["ROI Timeline", "12-18 months"],
             ].map((row, i) => new TableRow({

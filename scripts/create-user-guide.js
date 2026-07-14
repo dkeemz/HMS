@@ -165,16 +165,30 @@ const doc = new Document({
         new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("5.2 Processing Payments")] }),
         new Paragraph({ spacing: { after: 200 }, indent: { left: 360 }, children: [new TextRun("5.3 Insurance Claims")] }),
 
-        new Paragraph({ spacing: { after: 100 }, children: [new TextRun({ text: "6. Administration", bold: true, size: 22 })] }),
-        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("6.1 Managing Users")] }),
-        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("6.2 Role-Based Access Control")] }),
-        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("6.3 Audit Logs")] }),
-        new Paragraph({ spacing: { after: 200 }, indent: { left: 360 }, children: [new TextRun("6.4 System Settings")] }),
+        new Paragraph({ spacing: { after: 100 }, children: [new TextRun({ text: "6. Staff Attendance & Scheduling", bold: true, size: 22 })] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("6.1 Clocking In & Out")] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("6.2 Viewing Your Schedule")] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("6.3 Requesting Time Off")] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("6.4 Shift Swap Requests")] }),
+        new Paragraph({ spacing: { after: 200 }, indent: { left: 360 }, children: [new TextRun("6.5 Manager Dashboard")] }),
 
-        new Paragraph({ spacing: { after: 100 }, children: [new TextRun({ text: "7. Troubleshooting", bold: true, size: 22 })] }),
-        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("7.1 Common Issues")] }),
-        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("7.2 Password Reset")] }),
-        new Paragraph({ spacing: { after: 200 }, indent: { left: 360 }, children: [new TextRun("7.3 Contact Support")] }),
+        new Paragraph({ spacing: { after: 100 }, children: [new TextRun({ text: "7. Servicom (Customer Service)", bold: true, size: 22 })] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("7.1 Submitting a Complaint")] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("7.2 Tracking Complaint Status")] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("7.3 Providing Feedback")] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("7.4 Surveys & Ratings")] }),
+        new Paragraph({ spacing: { after: 200 }, indent: { left: 360 }, children: [new TextRun("7.5 SLA & Escalation")] }),
+
+        new Paragraph({ spacing: { after: 100 }, children: [new TextRun({ text: "8. Administration", bold: true, size: 22 })] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("8.1 Managing Users")] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("8.2 Role-Based Access Control")] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("8.3 Audit Logs")] }),
+        new Paragraph({ spacing: { after: 200 }, indent: { left: 360 }, children: [new TextRun("8.4 System Settings")] }),
+
+        new Paragraph({ spacing: { after: 100 }, children: [new TextRun({ text: "9. Troubleshooting", bold: true, size: 22 })] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("9.1 Common Issues")] }),
+        new Paragraph({ spacing: { after: 100 }, indent: { left: 360 }, children: [new TextRun("9.2 Password Reset")] }),
+        new Paragraph({ spacing: { after: 200 }, indent: { left: 360 }, children: [new TextRun("9.3 Contact Support")] }),
 
         new Paragraph({ children: [new PageBreak()] }),
 
@@ -526,28 +540,180 @@ const doc = new Document({
 
         new Paragraph({ children: [new PageBreak()] }),
 
-        // === CHAPTER 6: ADMINISTRATION ===
-        new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("6. Administration")] }),
+        // === CHAPTER 6: STAFF ATTENDANCE ===
+        new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("6. Staff Attendance & Scheduling")] }),
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "This chapter covers clocking in/out, managing shifts, requesting time off, and shift swaps.", size: 22 })]
+        }),
 
-        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("6.1 Managing Users")] }),
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("6.1 Clocking In & Out")] }),
+        new Paragraph({
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "To clock in at the start of your shift:", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "Navigate to Attendance > Clock In from the main menu", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "The system records your IP address and location automatically", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "Your scheduled shift, expected hours, and break time are displayed", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "Click 'Confirm Clock In' to start your shift", size: 22 })]
+        }),
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "To clock out, go to Attendance > Clock Out and confirm. Overtime is calculated automatically if you exceed your scheduled hours. Break time (30 min for shifts >6 hours) is auto-deducted.", size: 22 })]
+        }),
+
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("6.2 Viewing Your Schedule")] }),
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "Go to Attendance > My Schedule to view your upcoming shifts. The calendar shows your assigned shifts, approved leave, and swap requests. Shift details include department, time, and assigned ward/room. You can view schedules weekly or monthly.", size: 22 })]
+        }),
+
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("6.3 Requesting Time Off")] }),
+        new Paragraph({
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "To request leave:", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "Navigate to Attendance > Leave Request", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "Select leave type (Annual, Sick, Maternity/Paternity, Study, Compassionate, Unpaid)", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "Enter start and end dates with a reason", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "Submit for approval. Your manager receives a notification and can approve or reject.", size: 22 })]
+        }),
+
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("6.4 Shift Swap Requests")] }),
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "To swap shifts with a colleague: Go to Attendance > Shift Swap > New Request. Select the shift you want to swap, choose a colleague with a compatible role and department, and submit. The system checks role compatibility and prevents conflicts. Both managers must approve before the swap is finalized.", size: 22 })]
+        }),
+
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("6.5 Manager Dashboard")] }),
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "Managers can view team attendance from Attendance > Team Overview. See who's clocked in, who's late, pending leave requests, and overtime hours. Auto-alerts notify you when staff are late, absent, or approaching overtime thresholds.", size: 22 })]
+        }),
+
+        new Paragraph({ children: [new PageBreak()] }),
+
+        // === CHAPTER 7: SERVICOM ===
+        new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("7. Servicom (Customer Service)")] }),
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "This chapter covers submitting complaints, tracking resolutions, providing feedback, and surveys.", size: 22 })]
+        }),
+
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("7.1 Submitting a Complaint")] }),
+        new Paragraph({
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "To file a complaint or service request:", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "Navigate to Servicom > New Complaint (or use the feedback button on any page)", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "Select category: General Inquiry, Complaint, Compliment, Suggestion, Service Request, Billing Issue, Clinical Care, Facility Issue, Staff Conduct, or Other", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "Set priority: Low, Medium, High, or Critical", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "Provide a detailed description. Optionally attach files or screenshots.", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 100 },
+          children: [new TextRun({ text: "Choose to submit anonymously or with your identity", size: 22 })]
+        }),
+        new Paragraph({
+          numbering: { reference: "steps", level: 0 },
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "Click 'Submit'. You receive a tracking number for follow-up.", size: 22 })]
+        }),
+
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("7.2 Tracking Complaint Status")] }),
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "Go to Servicom > My Complaints to track all your submissions. Each complaint shows its current status: Submitted, Acknowledged, Assigned, Investigating, Resolved, Closed, or Escalated. Click any complaint to view its full history, assigned investigator, and updates. You receive notifications at every stage.", size: 22 })]
+        }),
+
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("7.3 Providing Feedback")] }),
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "After any service interaction, you can provide feedback via: (1) In-app feedback button available on every screen, (2) Post-visit surveys sent automatically via SMS/email after appointments, (3) Feedback kiosks at key locations (if enabled). Rate your experience from 1-5 stars and add comments. Your feedback helps us improve service quality.", size: 22 })]
+        }),
+
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("7.4 Surveys & Ratings")] }),
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "HMS sends automated surveys at key touchpoints: post-discharge, after billing, after lab services, and after pharmacy visits. Surveys are customizable and can target specific departments. Results are aggregated in the Servicom dashboard for management review.", size: 22 })]
+        }),
+
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("7.5 SLA & Escalation")] }),
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [new TextRun({ text: "Every complaint has an SLA based on its priority level. Critical issues: 4-hour response, 24-hour resolution. High: 8-hour response, 48-hour resolution. Medium: 24-hour response, 7-day resolution. Low: 48-hour response, 14-day resolution. If an SLA is at risk, the system automatically escalates to the next management level. You can also manually escalate from the complaint detail page.", size: 22 })]
+        }),
+
+        new Paragraph({ children: [new PageBreak()] }),
+
+        // === CHAPTER 8: ADMINISTRATION ===
+        new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("8. Administration")] }),
+
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("8.1 Managing Users")] }),
         new Paragraph({
           spacing: { after: 200 },
           children: [new TextRun({ text: "Admins can add, edit, and deactivate user accounts from Administration > Users. When adding a new user, assign their role, department, and initial permissions. Deactivated accounts lose access immediately but audit logs are preserved.", size: 22 })]
         }),
 
-        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("6.2 Role-Based Access Control")] }),
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("8.2 Role-Based Access Control")] }),
         new Paragraph({
           spacing: { after: 200 },
           children: [new TextRun({ text: "HMS uses 15 predefined roles with hierarchical permissions. Admins can create custom roles with feature-level permissions. Role changes require Department Head approval and are fully audited. Temporary role elevation is supported for coverage situations.", size: 22 })]
         }),
 
-        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("6.3 Audit Logs")] }),
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("8.3 Audit Logs")] }),
         new Paragraph({
           spacing: { after: 200 },
           children: [new TextRun({ text: "Access audit logs from Administration > Audit Logs. Every action is logged with who, what, when, where, why, and patient affected. Use filters to search by date range, user, action type, or patient. Export logs for compliance reporting.", size: 22 })]
         }),
 
-        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("6.4 System Settings")] }),
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("8.4 System Settings")] }),
         new Paragraph({
           spacing: { after: 200 },
           children: [new TextRun({ text: "Configure system-wide settings from Administration > Settings. This includes email templates, notification preferences, appointment slot durations, department structures, and integration settings. Changes require admin approval and are version-controlled.", size: 22 })]
@@ -555,10 +721,10 @@ const doc = new Document({
 
         new Paragraph({ children: [new PageBreak()] }),
 
-        // === CHAPTER 7: TROUBLESHOOTING ===
-        new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("7. Troubleshooting")] }),
+        // === CHAPTER 9: TROUBLESHOOTING ===
+        new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun("9. Troubleshooting")] }),
 
-        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("7.1 Common Issues")] }),
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("9.1 Common Issues")] }),
         new Table({
           width: { size: 9360, type: WidthType.DXA },
           columnWidths: [3120, 6240],
@@ -600,13 +766,13 @@ const doc = new Document({
           ]
         }),
 
-        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("7.2 Password Reset")] }),
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("9.2 Password Reset")] }),
         new Paragraph({
           spacing: { after: 200 },
           children: [new TextRun({ text: "Click 'Forgot Password' on the login page to receive a reset link via email. The link expires after 15 minutes. If you cannot access your email, contact your administrator for a password reset. After resetting, you will need to log in again on all devices.", size: 22 })]
         }),
 
-        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("7.3 Contact Support")] }),
+        new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun("9.3 Contact Support")] }),
         new Paragraph({
           spacing: { after: 200 },
           children: [new TextRun({ text: "For technical support, contact your internal IT helpdesk or email support@dkeemz.com. Include your username, a description of the issue, and any error messages. For urgent issues affecting patient care, call the 24/7 support hotline.", size: 22 })]
