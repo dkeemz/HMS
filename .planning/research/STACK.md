@@ -79,58 +79,84 @@ The core principle: **build compliance into the architecture, not onto it**. HIP
 
 ## 3. Backend — API Server
 
-### Primary: NestJS 11 + TypeScript
+### Primary: FastAPI + Python 3.12
 
 | Attribute | Detail |
 |-----------|--------|
-| **Framework** | NestJS 11.x (Node.js 22 LTS) |
-| **Language** | TypeScript 5.x |
-| **API Style** | REST (primary) + GraphQL (patient chart views) |
-| **ORM** | Drizzle ORM (recommended) or Prisma 6.x |
-| **Task Queue** | BullMQ (Redis-backed) — medication reminders, appointment alerts |
-| **WebSocket** | Socket.io or native WebSocket (real-time bed board, alerts) |
-| **HL7/FHIR** | HAPI FHIR (Java sidecar) + custom HL7 v2 parser |
+| **Framework** | FastAPI 0.115+ (Python 3.12) |
+| **Language** | Python 3.12 |
+| **API Style** | REST (auto-generated OpenAPI/Swagger) |
+| **ORM** | SQLAlchemy 2.x + Alembic (migrations) |
+| **Validation** | Pydantic v2 (built into FastAPI) |
+| **Task Queue** | Celery + Redis — medication reminders, appointment alerts |
+| **WebSocket** | Native WebSocket (real-time bed board, alerts) |
+| **HL7/FHIR** | HAPI FHIR (Java sidecar) + fhir.resources (Python) |
 
-**Why NestJS:**
-- **Module-per-domain architecture** — Each clinical domain (patients, appointments, billing, pharmacy, lab) is an isolated NestJS module with its own controller, service, and data layer. This is the standard pattern for healthcare microservices in 2026.
-- **Built-in RBAC** — Guards, decorators, and interceptor patterns implement minimum-necessary access at the API layer, not just the UI layer (HIPAA requirement).
-- **Immutability-friendly** — NestJS patterns naturally support append-only audit logging with write-only access from the application.
-- **TypeScript across the entire stack** — One language, one team, shared types between frontend and backend.
-- **Production proof** — The "PSI Nest" healthcare platform (HIPAA-compliant practice management) was built in 12 weeks with NestJS + passed independent HIPAA security assessment. The "hipaa-compliant-ehr-system" on GitHub uses NestJS microservices.
-- **Scalable** — The Cognito Health case study migrated from Express to NestJS specifically for scalability in HIPAA/PIPEDA healthcare environments.
+**Why FastAPI:**
+- **Native async** — Built on async/await, handles thousands of concurrent connections for real-time clinical dashboards.
+- **Auto-validation** — Pydantic models validate every request/response automatically. Catches data errors at the API boundary before they reach the database.
+- **Auto-documentation** — OpenAPI/Swagger generated automatically from type hints. No extra setup needed. Critical for healthcare API compliance.
+- **Type safety** — Python type hints + Pydantic provide the same data integrity guarantees as TypeScript, with better error messages.
+- **Python ecosystem** — AI/ML libraries (scikit-learn, PyTorch), clinical NLP, drug interaction databases, FHIR libraries — all native Python.
+- **Faster development** — Less boilerplate than NestJS. Decorators + type hints = clean, readable code.
+- **Healthcare Python libraries** — fhir.resources, hl7, pydicom, clinical-text datasets — all mature and well-maintained.
+- **HTMX integration** — FastAPI serves Jinja2 templates with HTMX for dynamic UI without a separate frontend framework.
 
-**Why not Python/FastAPI:**
-- Python is preferred for **AI/ML-heavy** clinical decision support or NLP workloads. We recommend a **Python microservice for clinical decision support and drug interaction checking** alongside the NestJS core.
-- For the primary API server handling scheduling, billing, and CRUD workflows, NestJS is superior due to TypeScript type safety, better async I/O for real-time features, and shared skillset with the frontend.
+**Why HTMX over React/Next.js:**
+- **Simpler architecture** — No build step, no npm, no React state management. Server-rendered HTML with dynamic updates.
+- **Faster initial delivery** — Jinja2 templates + HTMX = working UI in hours, not days.
+- **Better for healthcare workflows** — Most HMS screens are data-heavy forms and tables. HTMX handles these perfectly.
+- **Easier maintenance** — One codebase (Python), one team, one deployment.
+- **Progressive enhancement** — Works without JavaScript, enhanced with HTMX. Accessible by default.
+- **Mobile-responsive** — Tailwind CSS + HTMX = responsive without React complexity.
 
 **What NOT to use:**
-- **Express.js (without NestJS)** — Too unstructured for healthcare. Missing the module boundaries, guards, and interceptors that enforce HIPAA access controls. NestJS adds these as architectural defaults.
-- **Java Spring Boot** — Viable but 3-5x the development time. Overkill unless the team has deep Java expertise and no TypeScript capability.
-- **PHP/Laravel** — Viable for simpler HMS builds (single facility, < 50 doctors). For 500+ doctors and microservices, it creates architectural friction.
-- **Django/Flask** — Use only for the ML/NLP microservice, not the primary API.
+- **Django** — Too much magic, harder to customize. FastAPI gives more control with less overhead.
+- **Flask** — Lacks native async, auto-validation, and auto-documentation. Would need many extensions to match FastAPI.
+- **Express.js/NestJS** — Separate frontend/backend teams, more complex deployment, smaller Python ecosystem.
+- **Java Spring Boot** — 3-5x the development time. Overkill unless the team has deep Java expertise.
 
-**Confidence:** HIGH — Multiple production HIPAA-compliant healthcare platforms built with NestJS.
+**Confidence:** HIGH — FastAPI is the leading Python web framework in 2026, with excellent healthcare adoption.
 
 ---
 
-## 4. Secondary Backend — Clinical AI/ML Service
+## 4. Frontend — Server-Rendered UI
 
-### Python 3.12 + FastAPI
+### HTMX + Jinja2 + Tailwind CSS
 
 | Attribute | Detail |
 |-----------|--------|
-| **Framework** | FastAPI 0.115+ |
-| **Language** | Python 3.12 |
-| **ML** | PyTorch 2.x or scikit-learn |
-| **NLP** | Clinical NLP for ambient documentation, drug interaction checking |
-| **FHIR** | fhir.resources (Python FHIR library) |
+| **Templating** | Jinja2 (FastAPI native) |
+| **Dynamic UI** | HTMX 2.x (HTML-over-the-wire) |
+| **Styling** | Tailwind CSS 4.x |
+| **Icons** | Heroicons or Lucide |
+| **Charts** | Chart.js (via HTMX integration) |
+| **Tables** | DataTables.js or custom HTMX tables |
+| **Forms** | HTMX + server-side validation |
+| **Real-time** | SSE (Server-Sent Events) or WebSocket |
 
-**Why a separate Python service:**
-- Clinical decision support, drug interaction checking, and AI-assisted documentation require Python's ML ecosystem.
-- Keeps the Node.js/NestJS API clean and fast for CRUD workflows.
-- Independent scaling — ML inference has different resource profiles than API serving.
+**Why HTMX:**
+- **Simplicity** — No React, no build step, no npm. Server-rendered HTML with dynamic partial updates.
+- **Fast iteration** — Change Python template, see result immediately. No hot-reload needed.
+- **Healthcare-friendly** — Most HMS screens are forms, tables, and lists. HTMX handles these perfectly.
+- **Accessibility** — Server-rendered HTML is accessible by default. No React hydration issues.
+- **Mobile-responsive** — Tailwind CSS handles responsive design without framework overhead.
+- **Progressive enhancement** — Works without JavaScript, enhanced with HTMX.
+- **Lower cognitive load** — One language (Python), one team, one deployment pipeline.
 
-**Confidence:** MEDIUM — The specific ML requirements will shape this service significantly. Start with basic drug interaction rules and evolve toward AI-assisted documentation.
+**What HTMX replaces:**
+- React/Next.js (no SPA needed)
+- State management (server is the source of truth)
+- Client-side routing (server handles routing)
+- Build tools (no webpack/vite)
+
+**What NOT to use:**
+- **React/Next.js** — Overkill for server-rendered healthcare forms. Adds complexity without benefit.
+- **Vue.js** — Same issue as React. Better than React for simplicity but still unnecessary.
+- **Svelte** — Good but HTMX is simpler for server-rendered apps.
+- **Plain HTML/JS** — Too manual. HTMX adds just enough dynamism.
+
+**Confidence:** HIGH — HTMX is the leading choice for server-rendered dynamic UIs in Python web apps.
 
 ---
 
@@ -542,10 +568,9 @@ The core principle: **build compliance into the architecture, not onto it**. HIP
 
 | Layer | Technology | Confidence |
 |-------|-----------|------------|
-| **Web Frontend** | React 19 + Next.js 15 + TypeScript + Tailwind + Radix UI | HIGH |
-| **Mobile** | React Native (New Architecture) + TypeScript | HIGH |
-| **API Backend** | NestJS 11 + TypeScript + Drizzle ORM | HIGH |
-| **ML/AI Service** | Python 3.12 + FastAPI | MEDIUM |
+| **Web Frontend** | HTMX 2.x + Jinja2 + Tailwind CSS 4.x | HIGH |
+| **Mobile** | Responsive web (PWA in V2) | HIGH |
+| **API Backend** | FastAPI + Python 3.12 + SQLAlchemy 2.x | HIGH |
 | **Primary Database** | PostgreSQL 17 + TimescaleDB extension (AWS RDS Multi-AZ) | HIGH |
 | **FHIR Server** | HAPI FHIR 8.x | HIGH |
 | **Cache** | Redis 7.x (ElastiCache) | HIGH |
@@ -564,18 +589,15 @@ The core principle: **build compliance into the architecture, not onto it**. HIP
 ## Installation — Core Dependencies
 
 ```bash
-# Frontend
-npx create-next-app@latest hms-web --typescript --tailwind --app
-npm install @radix-ui/react-* zustand @tanstack/react-query react-hook-form zod socket.io-client
+# Backend (FastAPI)
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate  # Windows
+pip install fastapi uvicorn sqlalchemy alembic pydantic python-jose passlib python-multipart celery redis
 
-# Backend
-npx @nestjs/cli new hms-api --package-manager pnpm --skip-git
-pnpm add @nestjs/config @nestjs/passport @nestjs/jwt @nestjs/throttler drizzle-orm bullmq ioredis
-pnpm add -D drizzle-kit typescript @types/node
-
-# Mobile
-npx react-native init HMSMobile --template react-native-template-typescript
-npm install @react-navigation/native react-native-keychain react-native-biometrics react-native-ble-plx
+# Frontend (HTMX + Tailwind)
+# No installation needed — HTMX loaded via CDN, Tailwind via CDN or build
+# Templates served by FastAPI (Jinja2)
 
 # FHIR Server (Docker)
 docker pull hapiproject/hapi:latest
@@ -583,9 +605,12 @@ docker pull hapiproject/hapi:latest
 # Mirth Connect (Docker)
 docker pull nextgenhealthcare/connect:4.5.2
 
-# Keycloak (Helm)
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install keycloak bitnami/keycloak --set auth.adminPassword=<secure>
+# Keycloak (Docker)
+docker pull quay.io/keycloak/keycloak:26.0
+
+# Database (Docker)
+docker pull postgres:17-alpine
+docker pull redis:7-alpine
 ```
 
 ---

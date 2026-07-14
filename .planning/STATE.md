@@ -42,6 +42,8 @@ Progress: ░░░░░░░░░░ 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- [2026-07-14]: **Tech stack changed from NestJS/React to FastAPI + HTMX** — Python ecosystem, auto-validation, auto-docs, server-rendered simplicity
+- [2026-07-14]: **HTMX over React** — Simpler architecture, no build step, faster delivery, better for server-rendered healthcare forms
 - [Roadmap]: HIPAA compliance built into Phase 1 architecture, not deferred
 - [Roadmap]: EHR split into two phases (Documentation + Clinical Lists) to reduce per-phase complexity
 - [Roadmap]: Billing split into two phases (Foundation + Revenue) to separate invoicing from insurance claims
@@ -49,7 +51,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- Update Phase 1 PLAN.md for FastAPI/HTMX stack
+- Fix git push credentials issue
 
 ### Blockers/Concerns
 
@@ -68,5 +71,5 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-07-14
-Stopped at: Phase 1 PLAN.md created, ready to execute Task 1
+Stopped at: Tech stack updated to FastAPI/HTMX, docs updated, Phase 1 PLAN needs rewrite
 Resume file: .planning/phases/01-foundation-authentication/01-PLAN.md

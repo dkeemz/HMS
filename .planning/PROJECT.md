@@ -54,6 +54,8 @@ One unified system that replaces all fragmented hospital tools — if everything
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
+| FastAPI + HTMX stack | Python ecosystem, auto-validation, auto-docs, server-rendered simplicity, faster dev | Approved 2026-07-14 |
+| HTMX over React | Simpler architecture, no build step, faster delivery, better for server-rendered healthcare forms | Approved 2026-07-14 |
 | Web-first approach | Largest reach, no install needed, faster iteration | — Pending |
 | Hybrid deployment | Data residency requirements + scalability needs | — Pending |
 | Full EHR from v1 | Core clinical value, doctors need complete patient view | — Pending |

@@ -4,68 +4,105 @@
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| React | 19.x | UI framework |
-| Next.js | 15.x | SSR, routing, API routes |
-| TypeScript | 5.x | Type safety |
-| Material UI (MUI) | 6.x | Component library |
-| Recharts | 2.x | Data visualization |
-| React Query | 5.x | Server state management |
-| Zustand | 5.x | Client state management |
-| React Hook Form | 7.x | Form management |
-| Zod | 3.x | Schema validation |
+| HTMX | 2.x | Dynamic UI (HTML-over-the-wire) |
+| Jinja2 | 3.x | Server-side templating |
+| Tailwind CSS | 4.x | Utility-first styling |
+| Heroicons | 2.x | Icon library |
+| Chart.js | 4.x | Data visualization |
 
 ### Frontend Architecture
 ```
-src/
-├── app/                    # Next.js App Router
-│   ├── (auth)/            # Authentication routes
-│   ├── (dashboard)/       # Dashboard routes
-│   ├── api/               # API routes
-│   └── layout.tsx
-├── components/
-│   ├── ui/                # Base components (Button, Input, etc.)
-│   ├── forms/             # Form components
-│   ├── charts/            # Chart components
-│   └── layout/            # Layout components (Sidebar, Header)
-├── hooks/                 # Custom hooks
-├── lib/                   # Utilities, API client
-├── stores/                # Zustand stores
-└── types/                 # TypeScript types
+templates/
+├── base.html                # Base template (nav, sidebar, footer)
+├── auth/                    # Login, MFA, password reset
+├── components/              # Reusable UI components
+│   ├── buttons/
+│   ├── forms/
+│   ├── tables/
+│   └── modals/
+├── patients/                # Patient management
+├── doctors/                 # Doctor management
+├── scheduling/              # Appointments & shifts
+├── ehr/                     # Electronic health records
+├── billing/                 # Billing & invoicing
+├── attendance/              # Staff attendance
+├── servicom/                # Customer service
+├── reports/                 # Reports & dashboards
+└── static/                  # CSS, JS, images
+    ├── css/
+    ├── js/
+    └── img/
 ```
 
 ## Backend
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| NestJS | 11.x | Backend framework |
-| TypeScript | 5.x | Type safety |
-| Prisma | 6.x | ORM |
+| FastAPI | 0.115+ | Backend framework |
+| Python | 3.12 | Language |
+| SQLAlchemy | 2.x | ORM |
+| Alembic | 1.x | Database migrations |
+| Pydantic | 2.x | Data validation |
 | PostgreSQL | 17.x | Primary database |
-| Redis | 7.x | Caching, sessions |
+| Redis | 7.x | Caching, sessions, task queue |
 | Keycloak | 26.x | Identity & access management |
 | HAPI FHIR | 8.x | FHIR server |
 | Elasticsearch | 8.x | Audit log search |
+| Celery | 5.x | Background tasks |
 
 ### Backend Architecture
 ```
-src/
-├── modules/
-│   ├── auth/              # Authentication & authorization
-│   ├── patient/           # Patient management
-│   ├── doctor/            # Doctor & department management
-│   ├── scheduling/        # Appointment & shift scheduling
-│   ├── ehr/               # Electronic health records
-│   ├── billing/           # Billing & invoicing
-│   ├── attendance/        # Staff attendance
-│   ├── servicom/          # Customer service
-│   └── analytics/         # Reporting & dashboards
-├── common/
-│   ├── guards/            # Auth, RBAC guards
-│   ├── interceptors/      # Logging, transformation
-│   ├── decorators/        # Custom decorators
-│   └── filters/           # Exception filters
-├── config/                # Configuration
-└── main.ts
+app/
+├── main.py                 # Application entry point
+├── core/                   # Core configuration
+│   ├── config.py           # Settings & environment variables
+│   ├── database.py         # Database connection & session
+│   ├── security.py         # Auth, JWT, password hashing
+│   └── deps.py             # Dependency injection
+├── models/                 # SQLAlchemy models
+│   ├── auth.py             # User, Role, Permission
+│   ├── patient.py          # Patient, Contact, Insurance
+│   ├── doctor.py           # Doctor, Department
+│   ├── scheduling.py       # Appointment, Shift, Room
+│   ├── ehr.py              # Encounter, Vitals, Diagnosis
+│   ├── billing.py          # Invoice, Payment, Claim
+│   ├── attendance.py       # Clock record, Leave, Swap
+│   └── servicom.py         # Complaint, Feedback, Survey
+├── schemas/                # Pydantic schemas
+│   ├── auth.py
+│   ├── patient.py
+│   ├── doctor.py
+│   ├── scheduling.py
+│   ├── ehr.py
+│   ├── billing.py
+│   ├── attendance.py
+│   └── servicom.py
+├── api/                    # API routes
+│   ├── v1/                 # API version 1
+│   │   ├── auth.py
+│   │   ├── patients.py
+│   │   ├── doctors.py
+│   │   ├── scheduling.py
+│   │   ├── ehr.py
+│   │   ├── billing.py
+│   │   ├── attendance.py
+│   │   └── servicom.py
+│   └── deps.py             # Route dependencies
+├── services/               # Business logic
+│   ├── auth.py
+│   ├── patient.py
+│   ├── doctor.py
+│   ├── scheduling.py
+│   ├── ehr.py
+│   ├── billing.py
+│   ├── attendance.py
+│   └── servicom.py
+├── templates/              # Jinja2 templates (same as frontend/)
+├── static/                 # Static files (CSS, JS, images)
+└── tasks/                  # Celery tasks
+    ├── notifications.py    # Email, SMS, push notifications
+    ├── reports.py          # Scheduled report generation
+    └── cleanup.py          # Data cleanup, archival
 ```
 
 ## Database
@@ -94,6 +131,7 @@ audit         -- Audit logs (partitioned by month)
 - Rate limiting
 - Real-time notifications (Pub/Sub)
 - Caching (dashboard data, frequent queries)
+- Celery task queue broker
 
 ### Elasticsearch 8
 - Audit log search and analytics
@@ -148,14 +186,14 @@ audit         -- Audit logs (partitioned by month)
 ### CI/CD Pipeline
 ```
 GitHub Actions:
-├── Lint & Type Check
-├── Unit Tests
-├── Integration Tests
+├── Lint & Type Check (Ruff, mypy)
+├── Unit Tests (pytest)
+├── Integration Tests (pytest)
 ├── Security Scan (Snyk, Trivy)
 ├── Build Docker Images
 ├── Push to Registry
 ├── Deploy to Staging
-├── E2E Tests
+├── E2E Tests (Playwright)
 └── Deploy to Production (manual approval)
 ```
 
@@ -169,13 +207,13 @@ GitHub Actions:
 
 | Tool | Purpose |
 |------|---------|
-| ESLint | Code linting |
-| Prettier | Code formatting |
-| Jest | Unit testing |
-| Supertest | API testing |
+| Ruff | Python linting |
+| Black | Python formatting |
+| mypy | Static type checking |
+| pytest | Unit testing |
+| httpx | API testing |
 | Playwright | E2E testing |
-| Prisma Studio | Database management |
-| Storybook | Component documentation |
+| pgAdmin | Database management |
 
 ## Performance Targets
 
