@@ -5,6 +5,8 @@ from typing import Any
 
 from keycloak import KeycloakAdmin, KeycloakOpenID
 from keycloak.exceptions import KeycloakError
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 
@@ -175,14 +177,146 @@ class KeycloakService:
         if self.admin is None:
             raise RuntimeError("Keycloak admin client not available")
 
-        actions: list[str] = []
+        actions: list[dict[str, Any]] = []
         if push_notification:
-            actions.append("EXECUTE_ACTIONS")
+            actions.append(
+                {"alias": "EXECUTE_ACTIONS", "name": "Execute Actions", "enabled": True}
+            )
         if totp:
-            actions.append("CONFIGURE_TOTP")
+            actions.append(
+                {"alias": "CONFIGURE_TOTP", "name": "Configure OTP", "enabled": True}
+            )
 
+        self.admin.update_realm(settings.KEYCLOAK_REALM, {"requiredActions": actions})
         logger.info(
-            "MFA policy update requested (push=%s, totp=%s)",
+            "MFA policy updated (push=%s, totp=%s)",
             push_notification,
             totp,
         )
+
+    # ---- Role sync helpers ----
+
+    async def sync_roles_from_keycloak(
+        self, db: AsyncSession, user_id: str
+    ) -> None:
+        """Pull roles from Keycloak and create/update UserRole entries in HMS.
+
+        ``user_id`` is the HMS User UUID (not the Keycloak subject).
+        """
+        from app.models.role import Role
+        from app.models.user import User
+        from app.models.user_role import UserRole
+
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if user is None:
+            logger.warning("sync_roles_from_keycloak: HMS user %s not found", user_id)
+            return
+
+        keycloak_sub = user.password_hash.removeprefix("keycloak:")
+        if not keycloak_sub:
+            logger.warning(
+                "sync_roles_from_keycloak: user %s has no keycloak subject", user_id
+            )
+            return
+
+        kc_roles = self.get_user_roles(keycloak_sub)
+
+        # Ensure each Keycloak role exists as an HMS Role row
+        hms_roles: dict[str, Role] = {}
+        for role_name in kc_roles:
+            role_result = await db.execute(
+                select(Role).where(Role.name == role_name)
+            )
+            role = role_result.scalar_one_or_none()
+            if role is None:
+                role = Role(
+                    name=role_name,
+                    description=f"Auto-synced from Keycloak: {role_name}",
+                )
+                db.add(role)
+                await db.flush()
+                logger.info("Created new HMS role from Keycloak: %s", role_name)
+            hms_roles[role_name] = role
+
+        # Fetch existing UserRole entries for this user
+        existing_result = await db.execute(
+            select(UserRole).where(UserRole.user_id == user.id)
+        )
+        existing_user_roles = {ur.role_id: ur for ur in existing_result.scalars().all()}
+        desired_role_ids = {r.id for r in hms_roles.values()}
+
+        # Add missing roles
+        for role_name, role in hms_roles.items():
+            if role.id not in existing_user_roles:
+                db.add(UserRole(user_id=user.id, role_id=role.id))
+                logger.info(
+                    "Assigned Keycloak role '%s' to HMS user %s",
+                    role_name,
+                    user_id,
+                )
+
+        # Remove roles that no longer exist in Keycloak
+        for role_id, user_role in existing_user_roles.items():
+            if role_id not in desired_role_ids:
+                await db.delete(user_role)
+                logger.info("Removed stale role %s from HMS user %s", role_id, user_id)
+
+        await db.flush()
+
+    async def sync_roles_to_keycloak(
+        self, db: AsyncSession, user_id: str, role_names: list[str]
+    ) -> None:
+        """Push HMS role assignments to Keycloak.
+
+        Adds missing roles and removes extra roles so Keycloak matches HMS.
+        """
+        from app.models.user import User
+
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if user is None:
+            logger.warning("sync_roles_to_keycloak: HMS user %s not found", user_id)
+            return
+
+        keycloak_sub = user.password_hash.removeprefix("keycloak:")
+        if not keycloak_sub:
+            logger.warning(
+                "sync_roles_to_keycloak: user %s has no keycloak subject", user_id
+            )
+            return
+
+        current_kc_roles = set(self.get_user_roles(keycloak_sub))
+        desired_roles = set(role_names)
+
+        # Add missing roles
+        for role_name in desired_roles - current_kc_roles:
+            try:
+                self.assign_role(keycloak_sub, role_name)
+                logger.info(
+                    "Assigned role '%s' to Keycloak user %s",
+                    role_name,
+                    keycloak_sub,
+                )
+            except KeycloakError:
+                logger.exception(
+                    "Failed to assign role '%s' to Keycloak user %s",
+                    role_name,
+                    keycloak_sub,
+                )
+
+        # Remove extra roles
+        for role_name in current_kc_roles - desired_roles:
+            try:
+                self.remove_role(keycloak_sub, role_name)
+                logger.info(
+                    "Removed role '%s' from Keycloak user %s",
+                    role_name,
+                    keycloak_sub,
+                )
+            except KeycloakError:
+                logger.exception(
+                    "Failed to remove role '%s' from Keycloak user %s",
+                    role_name,
+                    keycloak_sub,
+                )

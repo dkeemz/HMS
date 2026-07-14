@@ -55,7 +55,8 @@ async def sync_user_from_keycloak(
     """Find or create an HMS User from a Keycloak JWT payload.
 
     On first login the user row is created automatically.  Subsequent logins
-    update profile fields if they changed in Keycloak.
+    update profile fields if they changed in Keycloak.  Roles are always
+    synced from Keycloak to HMS on every login.
     """
     keycloak_sub: str = payload["sub"]
     email: str = payload.get("email", "")
@@ -89,6 +90,14 @@ async def sync_user_from_keycloak(
         if changed:
             await db.flush()
             logger.info("Synced profile changes for user: %s", email)
+
+    # Bidirectional role sync: pull Keycloak roles into HMS
+    try:
+        kc = KeycloakService()
+        if kc.admin is not None:
+            await kc.sync_roles_from_keycloak(db, user.id)
+    except Exception:
+        logger.exception("Failed to sync roles from Keycloak for user %s", email)
 
     return user
 
