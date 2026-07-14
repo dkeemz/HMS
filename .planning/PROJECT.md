@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An all-in-one Health Management System for large hospital chains, serving doctors, nurses, admin staff, and registered patients. Replaces fragmented hospital tools with a unified platform covering patient management, clinical records, scheduling, and billing — accessible via web and mobile, deployed hybrid (on-premise + cloud), compliant with multiple international healthcare standards (HIPAA, PDPA, etc.).
+An all-in-one Health Management System for large hospital chains, serving doctors, nurses, admin staff, and registered patients. Replaces fragmented hospital tools with a unified platform covering patient management, clinical records, scheduling, and billing — accessible via web and mobile, deployed hybrid (on-premise + cloud), compliant with international and Nigerian healthcare standards (HIPAA, PDPA, NDPA, NHIS, NAFDAC, etc.).
 
 ## Core Value
 
@@ -37,14 +37,14 @@ One unified system that replaces all fragmented hospital tools — if everything
 
 - **Target scale:** Large hospital chain (500+ doctors, multiple departments)
 - **Deployment:** Hybrid — hospital on-premise servers + cloud for scalability
-- **Compliance:** Multiple international standards (HIPAA, PDPA, and others)
+- **Compliance:** International standards (HIPAA, PDPA) + Nigerian standards (NDPA, NHIS, NAFDAC, Cybercrimes Act 2015)
 - **Platform:** Web application (primary) + mobile (v2+)
 - **Users:** Full hospital staff (doctors, nurses, admin, reception) + registered patients
 - **Problem:** Hospitals currently juggle multiple disconnected tools for records, scheduling, billing — leading to inefficiency and poor patient continuity
 
 ## Constraints
 
-- **Compliance**: Must meet HIPAA + PDPA + international standards — affects data storage, encryption, audit logging
+- **Compliance**: Must meet HIPAA + PDPA + NDPA (Nigeria Data Protection Act 2023) + NHIS + NAFDAC + Cybercrimes Act 2015 — affects data storage, encryption, audit logging
 - **Deployment**: Hybrid architecture — data residency requirements mean some data stays on-premise
 - **Scale**: Must support 500+ concurrent doctors across departments
 - **Security**: Patient health data requires encryption at rest and in transit, role-based access, audit trails
@@ -58,7 +58,7 @@ One unified system that replaces all fragmented hospital tools — if everything
 | Hybrid deployment | Data residency requirements + scalability needs | — Pending |
 | Full EHR from v1 | Core clinical value, doctors need complete patient view | — Pending |
 | Billing in v1 | Revenue cycle management is critical for hospital operations | — Pending |
-| Multiple compliance standards | International hospital chain requires HIPAA + PDPA + others | — Pending |
+| Multiple compliance standards | International hospital chain requires HIPAA + PDPA + Nigerian standards (NDPA, NHIS, NAFDAC) | — Pending |
 
 ## Evolution
 
