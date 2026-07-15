@@ -12,6 +12,7 @@ redis
 elasticsearch
 python-keycloak
 httpx
+slowapi>=0.1.9
 pytest
 pytest-asyncio
 anyio

@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import CurrentUser
+from app.core.rate_limit import AUTH_RATE, MFA_VERIFY_RATE, limiter
 from app.core.security import compute_device_fingerprint, sync_user_from_keycloak
 from app.core.session import create_session, invalidate_all_sessions
 from app.models.session import UserSession
@@ -20,6 +21,7 @@ from app.schemas.auth import (
     MFAChallengeResponse,
     RefreshRequest,
     TokenResponse,
+    UpdateProfileRequest,
     UserResponse,
 )
 from app.services.keycloak import KeycloakService
@@ -39,6 +41,7 @@ def _keycloak_service() -> KeycloakService:
 
 
 @router.post("/login", response_model=TokenResponse | MFAChallengeResponse)
+@limiter.limit(AUTH_RATE)
 async def login(
     body: LoginRequest,
     request: Request,
@@ -253,6 +256,7 @@ async def get_me(
         email=current_user.email,
         first_name=current_user.first_name,
         last_name=current_user.last_name,
+        phone=current_user.phone,
         status=current_user.status,
         roles=roles,
         last_login_at=current_user.last_login_at,
@@ -278,3 +282,166 @@ async def mfa_status(
         }
     except Exception:
         return {"mfa_configured": False, "pending_actions": []}
+
+
+# ── PUT /auth/me ─────────────────────────────────────────────────────────
+
+
+@router.put("/me", response_model=UserResponse)
+async def update_me(
+    body: UpdateProfileRequest,
+    current_user: CurrentUser,
+    db: AsyncSession = Depends(get_db),
+    kc: KeycloakService = Depends(_keycloak_service),
+):
+    """Update the current user's profile (name, phone)."""
+    if body.first_name is not None:
+        current_user.first_name = body.first_name
+    if body.last_name is not None:
+        current_user.last_name = body.last_name
+    if body.phone is not None:
+        current_user.phone = body.phone
+
+    # Also update in Keycloak if the user is managed by Keycloak
+    keycloak_sub = current_user.password_hash.removeprefix("keycloak:")
+    if keycloak_sub and keycloak_sub != current_user.password_hash:
+        try:
+            update_data: dict = {}
+            if body.first_name is not None:
+                update_data["firstName"] = body.first_name
+            if body.last_name is not None:
+                update_data["lastName"] = body.last_name
+            if update_data and kc.admin is not None:
+                kc.admin.update_user(keycloak_sub, update_data)
+        except Exception:
+            logger.warning(
+                "Failed to update Keycloak profile for user %s",
+                current_user.id,
+            )
+
+    await db.flush()
+
+    from app.models.role import Role
+    from app.models.user_role import UserRole
+
+    result = await db.execute(
+        select(Role.name)
+        .join(UserRole, UserRole.role_id == Role.id)
+        .where(UserRole.user_id == current_user.id)
+    )
+    roles = [row[0] for row in result.all()]
+
+    return UserResponse(
+        id=str(current_user.id),
+        email=current_user.email,
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
+        phone=current_user.phone,
+        status=current_user.status,
+        roles=roles,
+        last_login_at=current_user.last_login_at,
+    )
+
+
+# ── POST /auth/mfa/verify ───────────────────────────────────────────────
+
+
+@router.post("/mfa/verify", response_model=TokenResponse)
+@limiter.limit(MFA_VERIFY_RATE)
+async def verify_mfa(
+    session_id: str,
+    code: str,
+    request: Request,
+    response: Response,
+    mfa_method: str = "totp",
+    db: AsyncSession = Depends(get_db),
+    kc: KeycloakService = Depends(_keycloak_service),
+):
+    """Verify an MFA code (TOTP or push notification) for a pending session.
+
+    On success the session is activated and tokens are returned.
+    """
+    # Look up the pending session
+    result = await db.execute(
+        select(UserSession).where(
+            UserSession.id == session_id,
+            UserSession.is_active.is_(True),
+        )
+    )
+    session = result.scalar_one_or_none()
+
+    if session is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired MFA session.",
+        )
+
+    # Look up the user for this session
+    user_result = await db.execute(
+        select(User).where(User.id == session.user_id)
+    )
+    user = user_result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found.")
+
+    keycloak_sub = user.password_hash.removeprefix("keycloak:")
+
+    if mfa_method == "totp":
+        # Verify TOTP code via Keycloak token exchange with the OTP credential
+        try:
+            token_data = kc.get_token(username=user.email, password=code)
+        except Exception:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid MFA code.",
+            )
+        access_token = token_data["access_token"]
+        refresh_token = token_data["refresh_token"]
+        expires_in = token_data.get("expires_in", 900)
+
+    elif mfa_method == "push_notification":
+        # For push notifications the code is the approval token from the
+        # Keycloak push notification flow.  Verify via token exchange.
+        try:
+            token_data = kc.get_token(username=user.email, password=code)
+        except Exception:
+            raise HTTPException(
+                status_code=401,
+                detail="Push notification not approved or expired.",
+            )
+        access_token = token_data["access_token"]
+        refresh_token = token_data["refresh_token"]
+        expires_in = token_data.get("expires_in", 900)
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported MFA method. Use 'totp' or 'push_notification'.",
+        )
+
+    # Mark the Keycloak required action as completed if it was pending
+    if keycloak_sub and keycloak_sub != user.password_hash:
+        try:
+            actions = kc.get_required_actions(keycloak_sub)
+            remaining = [a for a in actions if a != "CONFIGURE_TOTP"]
+            if remaining != actions:
+                kc.set_required_actions(keycloak_sub, remaining)
+        except Exception:
+            logger.warning("Failed to update Keycloak required actions for %s", user.id)
+
+    # Set the access token cookie
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite="strict",
+        max_age=expires_in,
+    )
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        expires_in=expires_in,
+        session_id=str(session.id),
+    )

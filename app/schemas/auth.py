@@ -27,9 +27,16 @@ class UserResponse(BaseModel):
     email: str
     first_name: str
     last_name: str
+    phone: str | None = None
     status: str
     roles: list[str] = []
     last_login_at: datetime | None = None
+
+
+class UpdateProfileRequest(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    phone: str | None = None
 
 
 class LogoutRequest(BaseModel):
