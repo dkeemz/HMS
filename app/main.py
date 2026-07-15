@@ -63,6 +63,11 @@ async def password_reset_confirm_page(request: Request):
     return templates.TemplateResponse(request, "auth/password_reset_confirm.html")
 
 
+@app.get("/admin/users")
+async def admin_users(request: Request):
+    return templates.TemplateResponse(request, "admin/users.html")
+
+
 @app.get("/admin/roles")
 async def admin_roles(request: Request):
     return templates.TemplateResponse(request, "admin/roles.html")

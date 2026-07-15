@@ -15,3 +15,8 @@ line-length = 88
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+addopts = "-p no:seleniumbase"
+markers = [
+    "e2e: end-to-end browser tests (deselect with '-m not e2e')",
+]
+testpaths = ["tests"]
