@@ -1,0 +1,93 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}MFA Verification — HMS{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 dark:from-slate-900 dark:to-slate-800 px-4">
+
+  <div class="w-full max-w-md">
+    {# Logo #}
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#1565C0] mb-4" aria-hidden="true">
+        <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-hms-text">Two-Factor Authentication</h1>
+      <p class="text-sm text-hms-muted mt-1">Enter the code from your authenticator app</p>
+    </div>
+
+    {# MFA card #}
+    <div class="bg-hms-surface rounded-xl border border-hms-border shadow-sm p-6 sm:p-8">
+
+      <div id="mfa-form-container">
+        <form id="mfa-form"
+              hx-post="/api/v1/auth/mfa/verify"
+              hx-target="#mfa-form-container"
+              hx-swap="innerHTML"
+              hx-indicator="#mfa-indicator"
+              novalidate>
+
+          <input type="hidden" name="session_id" value="{{ session_id | default('', true) }}"/>
+
+          {# TOTP Code #}
+          <div class="mb-6">
+            <label for="mfa-code" class="block text-sm font-medium text-hms-text mb-1.5">Verification code</label>
+            <input type="text"
+                   id="mfa-code"
+                   name="totp_code"
+                   inputmode="numeric"
+                   pattern="[0-9]{6}"
+                   maxlength="6"
+                   autocomplete="one-time-code"
+                   placeholder="000000"
+                   autofocus
+                   class="w-full px-3 py-3 rounded-lg border border-hms-border bg-hms-bg text-hms-text text-lg text-center font-mono tracking-[0.5em]
+                          placeholder-hms-muted focus:border-[#1565C0] focus:ring-1 focus:ring-[#1565C0] outline-none transition-colors"
+                   aria-required="true"
+                   aria-describedby="mfa-help"/>
+            <p id="mfa-help" class="text-xs text-hms-muted mt-2 text-center">
+              Open your authenticator app (Google Authenticator, Authy, etc.) and enter the 6-digit code.
+            </p>
+          </div>
+
+          {# Push notification status #}
+          <div id="mfa-push-status" class="mb-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 flex items-center gap-3">
+            <svg class="animate-pulse w-5 h-5 text-[#1565C0] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <p class="text-sm text-blue-800 dark:text-blue-200">A push notification has been sent to your registered device.</p>
+          </div>
+
+          {# Submit #}
+          <button type="submit"
+                  class="w-full py-2.5 rounded-lg bg-[#1565C0] hover:bg-[#0D47A1] text-white text-sm font-semibold
+                         transition-colors focus:ring-2 focus:ring-[#1565C0] focus:ring-offset-2">
+            <span class="htmx-indicator">
+              <svg class="animate-spin inline w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              Verifying…
+            </span>
+            <span class="htmx-request-indicator: hidden">Verify</span>
+          </button>
+
+          {# Resend / back to login #}
+          <div class="flex items-center justify-between mt-4 text-sm">
+            <a href="/auth/login" class="text-hms-muted hover:text-hms-text transition-colors">Back to sign in</a>
+            <button type="button"
+                    onclick="HMS.Auth.resendMFAPush()"
+                    class="text-[#1565C0] hover:underline">
+              Resend push
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {# Error display #}
+      <div id="mfa-error" class="hidden mt-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3" role="alert"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

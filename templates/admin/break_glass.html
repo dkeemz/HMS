@@ -1,48 +1,59 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
 
 {% block title %}Break-Glass Admin Dashboard{% endblock %}
 
-{% block content %}
-<div class="max-w-7xl mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6">Break-Glass Emergency Access Dashboard</h1>
+{% block body %}
+<div class="flex min-h-screen">
+  {% set current_page = "admin-break-glass" %}
+  {% include "components/sidebar.html" %}
 
-    <!-- Tabs -->
-    <div class="flex gap-4 mb-6 border-b pb-2">
-        <button class="tab-btn px-4 py-2 font-medium" onclick="showTab('pending')" id="tab-pending">
+  <div class="flex-1 flex flex-col lg:ml-64 transition-all duration-250" id="main-layout-area">
+    {% include "components/header.html" %}
+
+    <main id="main-content" class="flex-1 p-4 lg:p-6 no-print" role="main" tabindex="-1">
+      <div class="max-w-7xl mx-auto">
+        <h2 class="text-2xl font-bold text-hms-text mb-6">Break-Glass Emergency Access Dashboard</h2>
+
+        <!-- Tabs -->
+        <div class="flex gap-4 mb-6 border-b border-hms-border pb-2 overflow-x-auto" role="tablist">
+          <button class="tab-btn px-4 py-2 font-medium text-sm whitespace-nowrap" onclick="showTab('pending')" id="tab-pending" role="tab" aria-selected="true" tabindex="0">
             Pending Requests
-        </button>
-        <button class="tab-btn px-4 py-2 font-medium" onclick="showTab('history')" id="tab-history">
+          </button>
+          <button class="tab-btn px-4 py-2 font-medium text-sm whitespace-nowrap" onclick="showTab('history')" id="tab-history" role="tab" aria-selected="false" tabindex="-1">
             Access History
-        </button>
-        <button class="tab-btn px-4 py-2 font-medium" onclick="showTab('alerts')" id="tab-alerts">
+          </button>
+          <button class="tab-btn px-4 py-2 font-medium text-sm whitespace-nowrap" onclick="showTab('alerts')" id="tab-alerts" role="tab" aria-selected="false" tabindex="-1">
             Frequency Alerts
-        </button>
-        <button class="tab-btn px-4 py-2 font-medium" onclick="showTab('reviews')" id="tab-reviews">
+          </button>
+          <button class="tab-btn px-4 py-2 font-medium text-sm whitespace-nowrap" onclick="showTab('reviews')" id="tab-reviews" role="tab" aria-selected="false" tabindex="-1">
             Compliance Reviews
-        </button>
-    </div>
-
-    <!-- Pending Requests -->
-    <div id="section-pending" class="section">
-        <h2 class="text-lg font-semibold mb-3">Pending Break-Glass Requests</h2>
-        <div id="pending-list"
-             hx-get="/api/v1/break-glass/pending"
-             hx-trigger="load, every 30s"
-             hx-swap="innerHTML"
-             class="bg-white shadow rounded-lg p-4">
-            <p class="text-gray-500">Loading...</p>
+          </button>
         </div>
-    </div>
 
-    <!-- Access History -->
-    <div id="section-history" class="section hidden">
-        <h2 class="text-lg font-semibold mb-3">Access History</h2>
-        <div class="flex gap-4 mb-4">
+        <!-- Pending Requests -->
+        <div id="section-pending" class="section" role="tabpanel" aria-labelledby="tab-pending">
+          <h3 class="text-lg font-semibold mb-3 text-hms-text">Pending Break-Glass Requests</h3>
+          <div id="pending-list"
+               hx-get="/api/v1/break-glass/pending"
+               hx-trigger="load, every 30s"
+               hx-swap="innerHTML"
+               class="bg-hms-surface border border-hms-border rounded-lg p-4">
+            <div class="flex items-center gap-3 text-hms-muted">
+              <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+              Loading…
+            </div>
+          </div>
+        </div>
+
+        <!-- Access History -->
+        <div id="section-history" class="section hidden" role="tabpanel" aria-labelledby="tab-history">
+          <h3 class="text-lg font-semibold mb-3 text-hms-text">Access History</h3>
+          <div class="flex gap-4 mb-4 flex-wrap">
             <input type="text" id="filter-doctor" placeholder="Doctor ID"
-                   class="border rounded px-3 py-2 text-sm" />
+                   class="border border-hms-border rounded px-3 py-2 text-sm bg-hms-bg text-hms-text" />
             <input type="text" id="filter-patient" placeholder="Patient ID"
-                   class="border rounded px-3 py-2 text-sm" />
-            <select id="filter-status" class="border rounded px-3 py-2 text-sm">
+                   class="border border-hms-border rounded px-3 py-2 text-sm bg-hms-bg text-hms-text" />
+            <select id="filter-status" class="border border-hms-border rounded px-3 py-2 text-sm bg-hms-bg text-hms-text">
                 <option value="">All Statuses</option>
                 <option value="pending">Pending</option>
                 <option value="approved">Approved</option>
@@ -53,187 +64,219 @@
                     hx-include="#filter-doctor, #filter-patient, #filter-status"
                     hx-target="#history-table-body"
                     hx-swap="innerHTML"
-                    class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+                    class="bg-[#1565C0] text-white px-4 py-2 rounded text-sm hover:bg-[#0D47A1] transition-colors">
                 Search
             </button>
-        </div>
-        <div class="bg-white shadow rounded-lg overflow-hidden">
+          </div>
+          <div class="bg-hms-surface border border-hms-border rounded-lg overflow-hidden">
             <table class="w-full text-sm">
-                <thead class="bg-gray-100">
+                <thead class="bg-hms-bg">
                     <tr>
-                        <th class="px-4 py-3 text-left">ID</th>
-                        <th class="px-4 py-3 text-left">Doctor</th>
-                        <th class="px-4 py-3 text-left">Patient</th>
-                        <th class="px-4 py-3 text-left">Status</th>
-                        <th class="px-4 py-3 text-left">Reason</th>
-                        <th class="px-4 py-3 text-left">Created</th>
-                        <th class="px-4 py-3 text-left">Audit</th>
+                        <th class="px-4 py-3 text-left font-medium text-hms-text">ID</th>
+                        <th class="px-4 py-3 text-left font-medium text-hms-text">Doctor</th>
+                        <th class="px-4 py-3 text-left font-medium text-hms-text">Patient</th>
+                        <th class="px-4 py-3 text-left font-medium text-hms-text">Status</th>
+                        <th class="px-4 py-3 text-left font-medium text-hms-text">Reason</th>
+                        <th class="px-4 py-3 text-left font-medium text-hms-text">Created</th>
+                        <th class="px-4 py-3 text-left font-medium text-hms-text">Audit</th>
                     </tr>
                 </thead>
                 <tbody id="history-table-body">
-                    <tr><td colspan="7" class="px-4 py-3 text-gray-500">Click Search to load data.</td></tr>
+                    <tr><td colspan="7" class="px-4 py-3 text-hms-muted">Click Search to load data.</td></tr>
                 </tbody>
             </table>
+          </div>
         </div>
-    </div>
 
-    <!-- Frequency Alerts -->
-    <div id="section-alerts" class="section hidden">
-        <h2 class="text-lg font-semibold mb-3">Frequency Alerts (>&gt;3 requests/week)</h2>
-        <div id="alerts-list"
-             hx-get="/api/v1/break-glass/alerts"
-             hx-trigger="load"
-             hx-swap="innerHTML"
-             class="bg-white shadow rounded-lg p-4">
-            <p class="text-gray-500">Loading...</p>
+        <!-- Frequency Alerts -->
+        <div id="section-alerts" class="section hidden" role="tabpanel" aria-labelledby="tab-alerts">
+          <h3 class="text-lg font-semibold mb-3 text-hms-text">Frequency Alerts (>3 requests/week)</h3>
+          <div id="alerts-list"
+               hx-get="/api/v1/break-glass/alerts"
+               hx-trigger="load"
+               hx-swap="innerHTML"
+               class="bg-hms-surface border border-hms-border rounded-lg p-4">
+            <div class="flex items-center gap-3 text-hms-muted">
+              <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+              Loading…
+            </div>
+          </div>
         </div>
-    </div>
 
-    <!-- Compliance Reviews -->
-    <div id="section-reviews" class="section hidden">
-        <h2 class="text-lg font-semibold mb-3">Pending Compliance Reviews (24h deadline)</h2>
-        <div id="reviews-list"
-             hx-get="/api/v1/break-glass/pending-reviews"
-             hx-trigger="load"
-             hx-swap="innerHTML"
-             class="bg-white shadow rounded-lg p-4">
-            <p class="text-gray-500">Loading...</p>
+        <!-- Compliance Reviews -->
+        <div id="section-reviews" class="section hidden" role="tabpanel" aria-labelledby="tab-reviews">
+          <h3 class="text-lg font-semibold mb-3 text-hms-text">Pending Compliance Reviews (24h deadline)</h3>
+          <div id="reviews-list"
+               hx-get="/api/v1/break-glass/pending-reviews"
+               hx-trigger="load"
+               hx-swap="innerHTML"
+               class="bg-hms-surface border border-hms-border rounded-lg p-4">
+            <div class="flex items-center gap-3 text-hms-muted">
+              <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+              Loading…
+            </div>
+          </div>
         </div>
-    </div>
 
-    <!-- Review Modal -->
-    <div id="review-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <h3 class="text-lg font-semibold mb-4">Compliance Review</h3>
-            <input type="hidden" id="review-break-glass-id" />
-            <textarea id="review-notes" rows="4"
-                      class="w-full border rounded px-3 py-2 text-sm mb-4"
-                      placeholder="Enter review notes..."></textarea>
-            <div class="flex gap-3 justify-end">
-                <button onclick="closeReviewModal()"
-                        class="px-4 py-2 border rounded text-sm hover:bg-gray-100">
-                    Cancel
-                </button>
-                <button onclick="submitReview()"
-                        class="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700">
-                    Submit Review
-                </button>
+        <!-- Review Modal -->
+        <div id="review-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="review-modal-title">
+            <div class="bg-hms-surface rounded-lg shadow-xl p-6 w-full max-w-md border border-hms-border">
+                <h3 id="review-modal-title" class="text-lg font-semibold mb-4 text-hms-text">Compliance Review</h3>
+                <input type="hidden" id="review-break-glass-id" />
+                <textarea id="review-notes" rows="4"
+                          class="w-full border border-hms-border rounded px-3 py-2 text-sm mb-4 bg-hms-bg text-hms-text"
+                          placeholder="Enter review notes..."></textarea>
+                <div class="flex gap-3 justify-end">
+                    <button onclick="closeReviewModal()"
+                            class="px-4 py-2 border border-hms-border rounded text-sm hover:bg-hms-bg text-hms-text transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="submitReview()"
+                            class="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors">
+                        Submit Review
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Deny Modal -->
-    <div id="deny-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <h3 class="text-lg font-semibold mb-4">Deny Break-Glass Request</h3>
-            <input type="hidden" id="deny-break-glass-id" />
-            <textarea id="deny-reason" rows="3"
-                      class="w-full border rounded px-3 py-2 text-sm mb-4"
-                      placeholder="Reason for denial..."></textarea>
-            <div class="flex gap-3 justify-end">
-                <button onclick="closeDenyModal()"
-                        class="px-4 py-2 border rounded text-sm hover:bg-gray-100">
-                    Cancel
-                </button>
-                <button onclick="submitDeny()"
-                        class="px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700">
-                    Deny Request
-                </button>
+        <!-- Deny Modal -->
+        <div id="deny-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="deny-modal-title">
+            <div class="bg-hms-surface rounded-lg shadow-xl p-6 w-full max-w-md border border-hms-border">
+                <h3 id="deny-modal-title" class="text-lg font-semibold mb-4 text-hms-text">Deny Break-Glass Request</h3>
+                <input type="hidden" id="deny-break-glass-id" />
+                <textarea id="deny-reason" rows="3"
+                          class="w-full border border-hms-border rounded px-3 py-2 text-sm mb-4 bg-hms-bg text-hms-text"
+                          placeholder="Reason for denial..."></textarea>
+                <div class="flex gap-3 justify-end">
+                    <button onclick="closeDenyModal()"
+                            class="px-4 py-2 border border-hms-border rounded text-sm hover:bg-hms-bg text-hms-text transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="submitDeny()"
+                            class="px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700 transition-colors">
+                        Deny Request
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Audit Trail Modal -->
-    <div id="audit-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-            <h3 class="text-lg font-semibold mb-4">Audit Trail</h3>
-            <div id="audit-trail-content" class="text-sm"></div>
-            <div class="flex justify-end mt-4">
-                <button onclick="closeAuditModal()"
-                        class="px-4 py-2 border rounded text-sm hover:bg-gray-100">
-                    Close
-                </button>
+        <!-- Audit Trail Modal -->
+        <div id="audit-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50" role="dialog" aria-modal="true" aria-labelledby="audit-modal-title">
+            <div class="bg-hms-surface rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto border border-hms-border">
+                <h3 id="audit-modal-title" class="text-lg font-semibold mb-4 text-hms-text">Audit Trail</h3>
+                <div id="audit-trail-content" class="text-sm text-hms-text"></div>
+                <div class="flex justify-end mt-4">
+                    <button onclick="closeAuditModal()"
+                            class="px-4 py-2 border border-hms-border rounded text-sm hover:bg-hms-bg text-hms-text transition-colors">
+                        Close
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
+      </div>
+    </main>
+  </div>
 </div>
 
 <style>
-    .tab-btn.active { border-bottom: 2px solid #2563eb; color: #2563eb; }
-    .status-pending { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
-    .status-approved { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
-    .status-denied { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
-    .status-expired { background: #e5e7eb; color: #374151; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
+    .tab-btn.active { border-bottom: 2px solid #1565C0; color: #1565C0; }
+    .dark .tab-btn.active { color: #42A5F5; border-bottom-color: #42A5F5; }
+    .status-pending   { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
+    .status-approved  { background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
+    .status-denied    { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
+    .status-expired   { background: #e5e7eb; color: #374151; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; }
 </style>
 
 <script>
 function showTab(name) {
-    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(function(s){ s.classList.add('hidden'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
     document.getElementById('section-' + name).classList.remove('hidden');
-    document.getElementById('tab-' + name).classList.add('active');
+    var btn = document.getElementById('tab-' + name);
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected','true');
 }
 showTab('pending');
 
 function approveRequest(id) {
     if (!confirm('Approve this break-glass request?')) return;
     fetch('/api/v1/break-glass/' + id + '/approve', { method: 'POST' })
-        .then(r => r.json())
-        .then(() => { htmx.trigger('#pending-list', 'load'); });
+        .then(function(r){ return r.json(); })
+        .then(function(){ htmx.trigger('#pending-list', 'load'); });
 }
 
 function openDenyModal(id) {
     document.getElementById('deny-break-glass-id').value = id;
     document.getElementById('deny-reason').value = '';
     document.getElementById('deny-modal').classList.remove('hidden');
+    document.getElementById('deny-reason').focus();
 }
 function closeDenyModal() { document.getElementById('deny-modal').classList.add('hidden'); }
 function submitDeny() {
-    const id = document.getElementById('deny-break-glass-id').value;
-    const reason = document.getElementById('deny-reason').value;
+    var id = document.getElementById('deny-break-glass-id').value;
+    var reason = document.getElementById('deny-reason').value;
     if (!reason || reason.length < 5) { alert('Denial reason must be at least 5 characters.'); return; }
     fetch('/api/v1/break-glass/' + id + '/deny', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason })
-    }).then(r => r.json())
-      .then(() => { closeDenyModal(); htmx.trigger('#pending-list', 'load'); });
+        body: JSON.stringify({ reason: reason })
+    }).then(function(r){ return r.json(); })
+      .then(function(){ closeDenyModal(); htmx.trigger('#pending-list', 'load'); });
 }
 
 function openReviewModal(id) {
     document.getElementById('review-break-glass-id').value = id;
     document.getElementById('review-notes').value = '';
     document.getElementById('review-modal').classList.remove('hidden');
+    document.getElementById('review-notes').focus();
 }
 function closeReviewModal() { document.getElementById('review-modal').classList.add('hidden'); }
 function submitReview() {
-    const id = document.getElementById('review-break-glass-id').value;
-    const notes = document.getElementById('review-notes').value;
+    var id = document.getElementById('review-break-glass-id').value;
+    var notes = document.getElementById('review-notes').value;
     if (!notes || notes.length < 10) { alert('Review notes must be at least 10 characters.'); return; }
     fetch('/api/v1/break-glass/' + id + '/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes })
-    }).then(r => r.json())
-      .then(() => { closeReviewModal(); htmx.trigger('#reviews-list', 'load'); });
+        body: JSON.stringify({ notes: notes })
+    }).then(function(r){ return r.json(); })
+      .then(function(){ closeReviewModal(); htmx.trigger('#reviews-list', 'load'); });
 }
 
 function showAuditTrail(id) {
     fetch('/api/v1/break-glass/' + id + '/audit')
-        .then(r => r.json())
-        .then(data => {
-            let html = '<table class="w-full"><thead><tr class="border-b"><th class="text-left py-2">Action</th><th class="text-left py-2">User</th><th class="text-left py-2">Time</th><th class="text-left py-2">Details</th></tr></thead><tbody>';
-            data.entries.forEach(e => {
-                html += '<tr class="border-b"><td class="py-2"><span class="status-' + e.action + '">' + e.action + '</span></td><td class="py-2">' + e.user_id.substring(0,8) + '...</td><td class="py-2">' + (e.timestamp || '') + '</td><td class="py-2">' + JSON.stringify(e.details || {}) + '</td></tr>';
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+            var html = '<table class="w-full"><thead><tr class="border-b border-hms-border"><th class="text-left py-2">Action</th><th class="text-left py-2">User</th><th class="text-left py-2">Time</th><th class="text-left py-2">Details</th></tr></thead><tbody>';
+            data.entries.forEach(function(e) {
+                html += '<tr class="border-b border-hms-border"><td class="py-2"><span class="status-' + e.action + '">' + e.action + '</span></td><td class="py-2">' + e.user_id.substring(0,8) + '...</td><td class="py-2">' + (e.timestamp || '') + '</td><td class="py-2">' + JSON.stringify(e.details || {}) + '</td></tr>';
             });
             html += '</tbody></table>';
-            if (data.entries.length === 0) html = '<p class="text-gray-500">No audit entries found.</p>';
+            if (data.entries.length === 0) html = '<p class="text-hms-muted">No audit entries found.</p>';
             document.getElementById('audit-trail-content').innerHTML = html;
             document.getElementById('audit-modal').classList.remove('hidden');
         });
 }
 function closeAuditModal() { document.getElementById('audit-modal').classList.add('hidden'); }
+</script>
 
-function statusClass(s) { return 'status-' + s; }
+<script>
+// Adjust main content margin based on sidebar state
+(function(){
+  var sidebar = document.getElementById('app-sidebar');
+  var mainArea = document.getElementById('main-layout-area');
+  if(!sidebar || !mainArea) return;
+  var obs = new MutationObserver(function(){
+    if(window.innerWidth >= 1024){
+      mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+    } else {
+      mainArea.style.marginLeft = '0';
+    }
+  });
+  obs.observe(sidebar, {attributes:true, attributeFilter:['class']});
+  if(window.innerWidth >= 1024){
+    mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+  }
+})();
 </script>
 {% endblock %}

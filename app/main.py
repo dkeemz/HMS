@@ -36,6 +36,27 @@ async def root(request: Request):
     return templates.TemplateResponse(request, "index.html")
 
 
+@app.get("/auth/login")
+async def login_page(request: Request):
+    return templates.TemplateResponse(request, "auth/login.html")
+
+
+@app.get("/auth/mfa")
+async def mfa_page(request: Request, session_id: str = ""):
+    ctx = {"session_id": session_id}
+    return templates.TemplateResponse(request, "auth/mfa.html", ctx)
+
+
+@app.get("/auth/password-reset")
+async def password_reset_page(request: Request):
+    return templates.TemplateResponse(request, "auth/password_reset.html")
+
+
+@app.get("/auth/password-reset/confirm")
+async def password_reset_confirm_page(request: Request):
+    return templates.TemplateResponse(request, "auth/password_reset_confirm.html")
+
+
 @app.get("/admin/roles")
 async def admin_roles(request: Request):
     return templates.TemplateResponse(request, "admin/roles.html")

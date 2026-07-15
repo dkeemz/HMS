@@ -1,1 +1,180 @@
-/* Custom styles - Tailwind handles most styling */
+/* ═══════════════════════════════════════════════════════════════════════════
+   HMS Custom Styles — Medical Blue Theme (#1565C0)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Medical blue palette */
+  --hms-primary: #1565C0;
+  --hms-primary-dark: #0D47A1;
+  --hms-primary-light: #42A5F5;
+  --hms-primary-surface: #E3F2FD;
+
+  /* Neutrals */
+  --hms-bg: #F8FAFC;
+  --hms-surface: #FFFFFF;
+  --hms-border: #E2E8F0;
+  --hms-text: #0F172A;
+  --hms-text-muted: #64748B;
+
+  /* Sidebar */
+  --hms-sidebar-w: 256px;
+  --hms-sidebar-collapsed-w: 64px;
+
+  /* Header */
+  --hms-header-h: 64px;
+}
+
+/* ── Dark Mode ─────────────────────────────────────────────────────────── */
+.dark {
+  --hms-primary: #42A5F5;
+  --hms-primary-dark: #1E88E5;
+  --hms-primary-light: #90CAF9;
+  --hms-primary-surface: #1E3A5F;
+
+  --hms-bg: #0F172A;
+  --hms-surface: #1E293B;
+  --hms-border: #334155;
+  --hms-text: #F1F5F9;
+  --hms-text-muted: #94A3B8;
+}
+
+/* ── Tailwind overrides via utility classes ─────────────────────────────── */
+.bg-hms-primary       { background-color: var(--hms-primary); }
+.text-hms-primary     { color: var(--hms-primary); }
+.border-hms-primary   { border-color: var(--hms-primary); }
+.bg-hms-surface       { background-color: var(--hms-surface); }
+.bg-hms-bg            { background-color: var(--hms-bg); }
+.text-hms-text        { color: var(--hms-text); }
+.text-hms-muted       { color: var(--hms-text-muted); }
+.border-hms-border    { border-color: var(--hms-border); }
+.dark .bg-hms-surface { background-color: var(--hms-surface); }
+.dark .text-hms-text  { color: var(--hms-text); }
+
+/* ── Skeleton loader animation ─────────────────────────────────────────── */
+@keyframes hms-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--hms-border) 25%, #f0f0f0 50%, var(--hms-border) 75%);
+  background-size: 800px 100%;
+  animation: hms-shimmer 1.5s infinite ease-in-out;
+  border-radius: 6px;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+  background-size: 800px 100%;
+}
+
+/* ── Toast animations ──────────────────────────────────────────────────── */
+@keyframes hms-toast-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes hms-toast-out {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(100%); opacity: 0; }
+}
+
+.toast-enter { animation: hms-toast-in 0.3s ease-out forwards; }
+.toast-exit  { animation: hms-toast-out 0.3s ease-in  forwards; }
+
+/* ── Sidebar transitions ───────────────────────────────────────────────── */
+.sidebar {
+  width: var(--hms-sidebar-w);
+  transition: width 0.25s ease;
+}
+
+.sidebar.collapsed {
+  width: var(--hms-sidebar-collapsed-w);
+}
+
+.sidebar .nav-label {
+  transition: opacity 0.15s ease;
+}
+
+.sidebar.collapsed .nav-label {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Mobile sidebar overlay */
+.sidebar-overlay {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Focus ring (accessibility) ────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--hms-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Print styles ──────────────────────────────────────────────────────── */
+@media print {
+  .no-print,
+  .sidebar,
+  .sidebar-overlay,
+  #app-header,
+  .toast-container {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 12pt;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #555;
+  }
+
+  table {
+    border-collapse: collapse;
+  }
+
+  table th,
+  table td {
+    border: 1px solid #ccc !important;
+    padding: 6px 8px !important;
+  }
+}
+
+.print-only {
+  display: none;
+}
+
+/* ── Keyboard nav skip link ────────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  background: var(--hms-primary);
+  color: #fff;
+  padding: 8px 16px;
+  z-index: 9999;
+  border-radius: 0 0 4px 0;
+}
+
+.skip-link:focus {
+  top: 0;
+}

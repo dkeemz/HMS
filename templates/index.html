@@ -1,15 +1,88 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
 
-{% block title %}HMS - Home{% endblock %}
+{% block title %}Dashboard — HMS{% endblock %}
 
-{% block content %}
-<div class="flex items-center justify-center min-h-screen">
-    <div class="text-center">
-        <h1 class="text-4xl font-bold text-blue-800 mb-4">Health Management System</h1>
-        <p class="text-gray-600 mb-6">Welcome to HMS</p>
-        <div class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg shadow">
-            System is running
+{% block body %}
+<div class="flex min-h-screen">
+  {% set current_page = "dashboard" %}
+  {% include "components/sidebar.html" %}
+
+  <div class="flex-1 flex flex-col lg:ml-64 transition-all duration-250" id="main-layout-area">
+    {% include "components/header.html" %}
+
+    <main id="main-content" class="flex-1 p-4 lg:p-6" role="main" tabindex="-1">
+      <div class="max-w-7xl mx-auto">
+        {# Page header #}
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold text-hms-text">Dashboard</h2>
+          <p class="text-sm text-hms-muted mt-1">Overview of your health management system</p>
         </div>
-    </div>
+
+        {# Stats cards skeleton #}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Total Patients</p>
+            <p class="text-2xl font-bold text-hms-text mt-1">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Today's Appointments</p>
+            <p class="text-2xl font-bold text-hms-text mt-1">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Active Alerts</p>
+            <p class="text-2xl font-bold text-hms-text mt-1">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">System Status</p>
+            <p class="text-2xl font-bold text-green-600 mt-1">Online</p>
+          </div>
+        </div>
+
+        {# Quick actions #}
+        <div class="bg-hms-surface rounded-lg border border-hms-border p-6">
+          <h3 class="text-lg font-semibold text-hms-text mb-4">Quick Actions</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <a href="/patients" class="flex items-center gap-2 p-3 rounded-lg border border-hms-border hover:bg-hms-bg transition-colors text-sm font-medium text-hms-text">
+              <svg class="w-4 h-4 text-hms-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+              Add Patient
+            </a>
+            <a href="/appointments" class="flex items-center gap-2 p-3 rounded-lg border border-hms-border hover:bg-hms-bg transition-colors text-sm font-medium text-hms-text">
+              <svg class="w-4 h-4 text-hms-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Book Appointment
+            </a>
+            <a href="/records" class="flex items-center gap-2 p-3 rounded-lg border border-hms-border hover:bg-hms-bg transition-colors text-sm font-medium text-hms-text">
+              <svg class="w-4 h-4 text-hms-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              View Records
+            </a>
+            <a href="/admin/audit" class="flex items-center gap-2 p-3 rounded-lg border border-hms-border hover:bg-hms-bg transition-colors text-sm font-medium text-hms-text">
+              <svg class="w-4 h-4 text-hms-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              Audit Log
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 </div>
+
+<script>
+// Adjust main content margin based on sidebar state
+(function(){
+  var sidebar = document.getElementById('app-sidebar');
+  var mainArea = document.getElementById('main-layout-area');
+  if(!sidebar || !mainArea) return;
+  var obs = new MutationObserver(function(){
+    if(window.innerWidth >= 1024){
+      mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+    } else {
+      mainArea.style.marginLeft = '0';
+    }
+  });
+  obs.observe(sidebar, {attributes:true, attributeFilter:['class']});
+  // Initial
+  if(window.innerWidth >= 1024){
+    mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+  }
+})();
+</script>
 {% endblock %}

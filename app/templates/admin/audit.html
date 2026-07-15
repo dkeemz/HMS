@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs — HMS Admin</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        h1 { font-size: 1.75rem; margin-bottom: 1.5rem; color: #1a1a1a; }
+        h2 { font-size: 1.25rem; margin: 1.5rem 0 0.75rem; color: #333; }
+        .card { background: #fff; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #eee; font-size: 0.875rem; }
+        th { font-weight: 600; background: #fafafa; position: sticky; top: 0; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-critical { background: #fee2e2; color: #991b1b; }
+        .badge-high { background: #fef3c7; color: #92400e; }
+        .badge-warning { background: #dbeafe; color: #1e40af; }
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-info { background: #e0e7ff; color: #3730a3; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: background 0.2s; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-success { background: #059669; color: #fff; }
+        .btn-success:hover { background: #047857; }
+        .btn-danger { background: #dc2626; color: #fff; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.875rem; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;
+        }
+        .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .form-row .form-group { flex: 1; min-width: 150px; }
+        .tabs { display: flex; gap: 0; border-bottom: 2px solid #e5e7eb; margin-bottom: 1.5rem; }
+        .tab { padding: 0.75rem 1.5rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; font-weight: 500; color: #6b7280; transition: all 0.2s; }
+        .tab.active { border-bottom-color: #2563eb; color: #2563eb; }
+        .tab:hover { color: #2563eb; }
+        .empty-state { text-align: center; padding: 3rem; color: #9ca3af; }
+        .alert { padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.875rem; }
+        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-info { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+        .pagination { display: flex; gap: 0.5rem; align-items: center; margin-top: 1rem; justify-content: center; }
+        .pagination button { padding: 0.5rem 1rem; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; cursor: pointer; font-size: 0.875rem; }
+        .pagination button:hover { background: #f3f4f6; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination button.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .hash { font-family: monospace; font-size: 0.75rem; color: #6b7280; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .actions { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        .table-wrapper { overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Audit Log Management</h1>
+
+        <div id="notification"></div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('logs')">Audit Logs</div>
+            <div class="tab" onclick="showTab('alerts')">Security Alerts</div>
+            <div class="tab" onclick="showTab('integrity')">Integrity Check</div>
+        </div>
+
+        <!-- Audit Logs Tab -->
+        <div id="tab-logs" class="tab-content">
+            <div class="card">
+                <h2>Search Audit Logs</h2>
+                <form id="search-form" onsubmit="searchLogs(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="user-id">User ID</label>
+                            <input type="text" id="user-id" name="user_id" placeholder="UUID">
+                        </div>
+                        <div class="form-group">
+                            <label for="action">Action</label>
+                            <select id="action" name="action">
+                                <option value="">All Actions</option>
+                                <option value="read">Read</option>
+                                <option value="create">Create</option>
+                                <option value="update">Update</option>
+                                <option value="delete">Delete</option>
+                                <option value="login">Login</option>
+                                <option value="login_failed">Login Failed</option>
+                                <option value="logout">Logout</option>
+                                <option value="export">Export</option>
+                                <option value="integrity_check">Integrity Check</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="resource">Resource</label>
+                            <input type="text" id="resource" name="resource" placeholder="e.g. patient, auth">
+                        </div>
+                        <div class="form-group">
+                            <label for="patient-id">Patient ID</label>
+                            <input type="text" id="patient-id" name="patient_id" placeholder="UUID">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="start-date">Start Date</label>
+                            <input type="datetime-local" id="start-date" name="start_date">
+                        </div>
+                        <div class="form-group">
+                            <label for="end-date">End Date</label>
+                            <input type="datetime-local" id="end-date" name="end_date">
+                        </div>
+                        <div class="form-group">
+                            <label for="ip-address">IP Address</label>
+                            <input type="text" id="ip-address" name="ip_address" placeholder="192.168.1.1">
+                        </div>
+                        <div class="form-group" style="flex: 0; display: flex; align-items: flex-end;">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-success btn-sm" onclick="exportLogs('csv')">Export CSV</button>
+                <button class="btn btn-primary btn-sm" onclick="loadLogs()">Refresh</button>
+            </div>
+
+            <div class="card">
+                <div class="table-wrapper" id="logs-table">
+                    <p class="empty-state">Use the search form above to find audit logs.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Alerts Tab -->
+        <div id="tab-alerts" class="tab-content" style="display:none">
+            <div class="card">
+                <h2>Security Alerts</h2>
+                <p style="margin-bottom: 1rem; color: #6b7280; font-size: 0.875rem;">
+                    Real-time detection of suspicious patterns: brute force, off-hours activity, bulk exports.
+                </p>
+                <button class="btn btn-primary btn-sm" onclick="loadAlerts()">Check Alerts</button>
+            </div>
+            <div class="card" id="alerts-table">
+                <p class="empty-state">Click "Check Alerts" to scan for suspicious patterns.</p>
+            </div>
+        </div>
+
+        <!-- Integrity Check Tab -->
+        <div id="tab-integrity" class="tab-content" style="display:none">
+            <div class="card">
+                <h2>Hash Chain Integrity Verification</h2>
+                <p style="margin-bottom: 1rem; color: #6b7280; font-size: 0.875rem;">
+                    Verify that the audit log hash chain is intact. Any tampering will be detected.
+                </p>
+                <form id="verify-form" onsubmit="verifyIntegrity(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="verify-start">Start Date</label>
+                            <input type="datetime-local" id="verify-start" name="start_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="verify-end">End Date</label>
+                            <input type="datetime-local" id="verify-end" name="end_date" required>
+                        </div>
+                        <div class="form-group" style="flex: 0; display: flex; align-items: flex-end;">
+                            <button type="submit" class="btn btn-primary">Verify</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="card" id="verify-result">
+                <p class="empty-state">Select a date range and click "Verify" to check hash chain integrity.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+
+        function showTab(name) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + name).style.display = 'block';
+            event.target.classList.add('active');
+        }
+
+        async function searchLogs(e) {
+            e.preventDefault();
+            currentPage = 1;
+            await loadLogs();
+        }
+
+        async function loadLogs(page = 1) {
+            const form = document.getElementById('search-form');
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+
+            for (const [key, value] of formData.entries()) {
+                if (value) params.append(key, value);
+            }
+            params.append('page', page);
+            params.append('page_size', '50');
+
+            try {
+                const resp = await fetch(`/api/v1/audit/logs?${params.toString()}`);
+                if (!resp.ok) throw new Error('Failed to fetch logs');
+                const data = await resp.json();
+                renderLogs(data);
+                currentPage = data.page;
+                totalPages = Math.ceil(data.total / data.page_size);
+            } catch (err) {
+                document.getElementById('logs-table').innerHTML =
+                    `<div class="alert alert-error">${esc(err.message)}</div>`;
+            }
+        }
+
+        function renderLogs(data) {
+            const el = document.getElementById('logs-table');
+            if (!data.entries.length) {
+                el.innerHTML = '<div class="empty-state">No audit logs found.</div>';
+                return;
+            }
+
+            let html = `<table>
+                <thead><tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Resource</th>
+                    <th>Resource ID</th>
+                    <th>Patient</th>
+                    <th>IP</th>
+                    <th>Hash</th>
+                </tr></thead>
+                <tbody>`;
+
+            for (const log of data.entries) {
+                html += `<tr>
+                    <td>${esc(log.timestamp || '—')}</td>
+                    <td><code>${esc(log.user_id || '—')}</code></td>
+                    <td><span class="badge ${actionBadge(log.action)}">${esc(log.action)}</span></td>
+                    <td>${esc(log.resource)}</td>
+                    <td><code>${esc(log.resource_id || '—')}</code></td>
+                    <td><code>${esc(log.patient_id || '—')}</code></td>
+                    <td>${esc(log.ip_address || '—')}</td>
+                    <td><span class="hash" title="${esc(log.hash || '')}">${esc((log.hash || '').substring(0, 12))}...</span></td>
+                </tr>`;
+            }
+
+            html += '</tbody></table>';
+
+            // Pagination
+            html += `<div class="pagination">
+                <button ${currentPage <= 1 ? 'disabled' : ''} onclick="loadLogs(${currentPage - 1})">Previous</button>
+                <span>Page ${currentPage} of ${totalPages} (${data.total} total)</span>
+                <button ${currentPage >= totalPages ? 'disabled' : ''} onclick="loadLogs(${currentPage + 1})">Next</button>
+            </div>`;
+
+            el.innerHTML = html;
+        }
+
+        function actionBadge(action) {
+            const map = {
+                'create': 'badge-success',
+                'read': 'badge-info',
+                'update': 'badge-warning',
+                'delete': 'badge-critical',
+                'login': 'badge-success',
+                'login_failed': 'badge-critical',
+                'logout': 'badge-info',
+                'export': 'badge-warning',
+                'integrity_check': 'badge-info',
+            };
+            return map[action] || 'badge-info';
+        }
+
+        async function loadAlerts() {
+            try {
+                const resp = await fetch('/api/v1/audit/alerts');
+                if (!resp.ok) throw new Error('Failed to fetch alerts');
+                const data = await resp.json();
+                renderAlerts(data);
+            } catch (err) {
+                document.getElementById('alerts-table').innerHTML =
+                    `<div class="alert alert-error">${esc(err.message)}</div>`;
+            }
+        }
+
+        function renderAlerts(data) {
+            const el = document.getElementById('alerts-table');
+            if (!data.alerts.length) {
+                el.innerHTML = '<div class="alert alert-success">No suspicious patterns detected.</div>';
+                return;
+            }
+
+            let html = `<table>
+                <thead><tr>
+                    <th>Type</th>
+                    <th>Severity</th>
+                    <th>User</th>
+                    <th>Count</th>
+                    <th>Message</th>
+                    <th>Detected</th>
+                </tr></thead>
+                <tbody>`;
+
+            for (const alert of data.alerts) {
+                const sevClass = alert.severity === 'critical' ? 'badge-critical' :
+                                 alert.severity === 'high' ? 'badge-high' : 'badge-warning';
+                html += `<tr>
+                    <td>${esc(alert.type)}</td>
+                    <td><span class="badge ${sevClass}">${esc(alert.severity)}</span></td>
+                    <td><code>${esc(alert.user_id || '—')}</code></td>
+                    <td>${alert.count}</td>
+                    <td>${esc(alert.message)}</td>
+                    <td>${esc(alert.detected_at)}</td>
+                </tr>`;
+            }
+
+            html += '</tbody></table>';
+            el.innerHTML = html;
+        }
+
+        async function verifyIntegrity(e) {
+            e.preventDefault();
+            const startDate = document.getElementById('verify-start').value;
+            const endDate = document.getElementById('verify-end').value;
+
+            if (!startDate || !endDate) return;
+
+            try {
+                const params = new URLSearchParams({
+                    start_date: new Date(startDate).toISOString(),
+                    end_date: new Date(endDate).toISOString(),
+                });
+                const resp = await fetch(`/api/v1/audit/verify?${params.toString()}`);
+                if (!resp.ok) throw new Error('Verification failed');
+                const data = await resp.json();
+                renderVerifyResult(data);
+            } catch (err) {
+                document.getElementById('verify-result').innerHTML =
+                    `<div class="alert alert-error">${esc(err.message)}</div>`;
+            }
+        }
+
+        function renderVerifyResult(data) {
+            const el = document.getElementById('verify-result');
+            if (data.is_valid) {
+                el.innerHTML = `<div class="alert alert-success">
+                    <strong>Hash Chain Verified</strong> — All entries are intact. No tampering detected.
+                    <br>Checked by: ${esc(data.verified_by)}
+                    <br>Range: ${esc(data.checked_start)} to ${esc(data.checked_end)}
+                </div>`;
+            } else {
+                el.innerHTML = `<div class="alert alert-error">
+                    <strong>Integrity Violation Detected</strong> — ${data.broken_entry_ids.length} broken entry/entries found.
+                    <br>Broken Entry IDs:
+                </div>
+                <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                    ${data.broken_entry_ids.map(id => `<li><code>${esc(id)}</code></li>`).join('')}
+                </ul>`;
+            }
+        }
+
+        function exportLogs(format) {
+            const form = document.getElementById('search-form');
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+            params.append('format', format);
+
+            for (const [key, value] of formData.entries()) {
+                if (value) params.append(key, value);
+            }
+
+            window.open(`/api/v1/audit/logs/export?${params.toString()}`, '_blank');
+        }
+
+        function esc(s) {
+            if (s === null || s === undefined) return '—';
+            const d = document.createElement('div');
+            d.textContent = String(s);
+            return d.innerHTML;
+        }
+
+        // Set default dates
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+            document.getElementById('start-date').value = thirtyDaysAgo.toISOString().slice(0, 16);
+            document.getElementById('end-date').value = now.toISOString().slice(0, 16);
+            document.getElementById('verify-start').value = thirtyDaysAgo.toISOString().slice(0, 16);
+            document.getElementById('verify-end').value = now.toISOString().slice(0, 16);
+        });
+    </script>
+</body>
+</html>

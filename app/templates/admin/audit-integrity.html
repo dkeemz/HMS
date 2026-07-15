@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Integrity — HMS Admin</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+        h1 { font-size: 1.75rem; margin-bottom: 1.5rem; color: #1a1a1a; }
+        h2 { font-size: 1.25rem; margin: 1.5rem 0 0.75rem; color: #333; }
+        .card { background: #fff; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: background 0.2s; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-success { background: #059669; color: #fff; }
+        .btn-success:hover { background: #047857; }
+        .btn-danger { background: #dc2626; color: #fff; }
+        .btn-danger:hover { background: #b91c1c; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.875rem; }
+        .form-group input {
+            width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;
+        }
+        .form-row { display: flex; gap: 1rem; align-items: flex-end; }
+        .form-row .form-group { flex: 1; }
+        .alert { padding: 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.875rem; }
+        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-info { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0; }
+        .stat { text-align: center; padding: 1rem; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: #1a1a1a; }
+        .stat-label { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; }
+        .broken-list { max-height: 300px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 6px; }
+        .broken-item { padding: 0.5rem 1rem; border-bottom: 1px solid #f3f4f6; font-family: monospace; font-size: 0.8rem; }
+        .broken-item:last-child { border-bottom: none; }
+        .spinner { display: inline-block; width: 1rem; height: 1rem; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 0.5rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading { pointer-events: none; opacity: 0.7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Audit Log Integrity Verification</h1>
+
+        <div id="notification"></div>
+
+        <div class="card">
+            <h2>Verify Hash Chain Integrity</h2>
+            <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">
+                This tool verifies that the SHA-256 hash chain of audit log entries is intact.
+                Any modification to a logged entry will break the chain and be detected.
+            </p>
+
+            <form id="verify-form" onsubmit="verifyIntegrity(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="start-date">Start Date</label>
+                        <input type="datetime-local" id="start-date" name="start_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="end-date">End Date</label>
+                        <input type="datetime-local" id="end-date" name="end_date" required>
+                    </div>
+                    <div class="form-group" style="flex: 0;">
+                        <button type="submit" class="btn btn-primary" id="verify-btn">Verify Integrity</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="result-container"></div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h2>How It Works</h2>
+            <div style="font-size: 0.875rem; color: #4b5563; line-height: 1.6;">
+                <p style="margin-bottom: 0.75rem;">
+                    <strong>1. Hash Chain:</strong> Each audit log entry includes a SHA-256 hash computed from
+                    the previous entry's hash, user ID, action, resource, and timestamp.
+                </p>
+                <p style="margin-bottom: 0.75rem;">
+                    <strong>2. Tamper Detection:</strong> If any entry is modified, its hash changes,
+                    breaking the chain for all subsequent entries.
+                </p>
+                <p style="margin-bottom: 0.75rem;">
+                    <strong>3. Verification:</strong> This tool recomputes each hash and verifies
+                    the chain linkage for the selected date range.
+                </p>
+                <p>
+                    <strong>4. Retention:</strong> Audit logs are retained for 6 years per HIPAA requirements.
+                    Use the cleanup tool in the main audit page to remove logs older than the retention period.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function verifyIntegrity(e) {
+            e.preventDefault();
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            if (!startDate || !endDate) return;
+
+            const btn = document.getElementById('verify-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Verifying...';
+
+            try {
+                const params = new URLSearchParams({
+                    start_date: new Date(startDate).toISOString(),
+                    end_date: new Date(endDate).toISOString(),
+                });
+                const resp = await fetch(`/api/v1/audit/verify?${params.toString()}`);
+                if (!resp.ok) throw new Error('Verification failed');
+                const data = await resp.json();
+                renderResult(data);
+            } catch (err) {
+                document.getElementById('result-container').innerHTML =
+                    `<div class="alert alert-error">${esc(err.message)}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Verify Integrity';
+            }
+        }
+
+        function renderResult(data) {
+            const el = document.getElementById('result-container');
+
+            if (data.is_valid) {
+                el.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>Integrity Verified</strong> — The hash chain is intact.
+                    </div>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value" style="color: #059669;">✓</div>
+                            <div class="stat-label">Status</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">0</div>
+                            <div class="stat-label">Broken Entries</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${data.verified_by.substring(0, 8)}...</div>
+                            <div class="stat-label">Verified By</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <p style="color: #6b7280; font-size: 0.875rem;">
+                            Checked range: ${esc(data.checked_start)} to ${esc(data.checked_end)}
+                        </p>
+                    </div>`;
+            } else {
+                el.innerHTML = `
+                    <div class="alert alert-error">
+                        <strong>Integrity Violation Detected</strong> — The hash chain has been broken.
+                    </div>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-value" style="color: #dc2626;">✗</div>
+                            <div class="stat-label">Status</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" style="color: #dc2626;">${data.broken_entry_ids.length}</div>
+                            <div class="stat-label">Broken Entries</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">${data.verified_by.substring(0, 8)}...</div>
+                            <div class="stat-label">Verified By</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h2>Broken Entry IDs</h2>
+                        <div class="broken-list">
+                            ${data.broken_entry_ids.map(id => `<div class="broken-item">${esc(id)}</div>`).join('')}
+                        </div>
+                    </div>`;
+            }
+        }
+
+        function esc(s) {
+            if (s === null || s === undefined) return '—';
+            const d = document.createElement('div');
+            d.textContent = String(s);
+            return d.innerHTML;
+        }
+
+        // Set default dates
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            document.getElementById('start-date').value = thirtyDaysAgo.toISOString().slice(0, 16);
+            document.getElementById('end-date').value = now.toISOString().slice(0, 16);
+        });
+    </script>
+</body>
+</html>
