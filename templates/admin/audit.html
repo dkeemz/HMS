@@ -1,0 +1,202 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Audit Log — HMS{% endblock %}
+
+{% block body %}
+<div class="flex min-h-screen">
+  {% set current_page = "admin-audit" %}
+  {% include "components/sidebar.html" %}
+
+  <div class="flex-1 flex flex-col lg:ml-64 transition-all duration-250" id="main-layout-area">
+    {% include "components/header.html" %}
+
+    <main id="main-content" class="flex-1 p-4 lg:p-6 no-print" role="main" tabindex="-1">
+      <div class="max-w-7xl mx-auto">
+        {# Page header #}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-hms-text">Audit Log</h2>
+            <p class="text-sm text-hms-muted mt-1">Track system activities and security events</p>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="exportAuditLog('csv')"
+                    class="inline-flex items-center gap-2 px-4 py-2 border border-hms-border rounded-lg text-sm font-medium text-hms-text hover:bg-hms-bg transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        {# Security Alerts Panel #}
+        <div id="security-alerts" 
+             class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6"
+             hx-get="/api/v1/audit/security-alerts"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+          <div class="flex items-center gap-3">
+            <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+            <span class="text-sm text-red-800 dark:text-red-200">Loading security alerts...</span>
+          </div>
+        </div>
+
+        {# Search and filters #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg p-4 mb-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label for="search-audit" class="block text-sm font-medium text-hms-text mb-1">Search</label>
+              <input type="text" 
+                     id="search-audit" 
+                     placeholder="Search logs..."
+                     class="w-full border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text"
+                     hx-get="/api/v1/audit"
+                     hx-trigger="keyup changed delay:300ms"
+                     hx-include="#filter-event-type, #filter-user, #date-from, #date-to"
+                     hx-target="#audit-table-body"
+                     hx-swap="innerHTML"
+                     name="search" />
+            </div>
+            
+            <div>
+              <label for="filter-event-type" class="block text-sm font-medium text-hms-text mb-1">Event Type</label>
+              <select id="filter-event-type"
+                      class="w-full border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text"
+                      hx-get="/api/v1/audit"
+                      hx-trigger="change"
+                      hx-include="#search-audit, #filter-user, #date-from, #date-to"
+                      hx-target="#audit-table-body"
+                      hx-swap="innerHTML"
+                      name="event_type">
+                <option value="">All Events</option>
+                <option value="auth">Authentication</option>
+                <option value="data_access">Data Access</option>
+                <option value="data_modification">Data Modification</option>
+                <option value="security">Security</option>
+                <option value="system">System</option>
+              </select>
+            </div>
+            
+            <div>
+              <label for="filter-user" class="block text-sm font-medium text-hms-text mb-1">User</label>
+              <input type="text" 
+                     id="filter-user" 
+                     placeholder="User ID or email..."
+                     class="w-full border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text"
+                     hx-get="/api/v1/audit"
+                     hx-trigger="keyup changed delay:300ms"
+                     hx-include="#search-audit, #filter-event-type, #date-from, #date-to"
+                     hx-target="#audit-table-body"
+                     hx-swap="innerHTML"
+                     name="user" />
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label for="date-from" class="block text-sm font-medium text-hms-text mb-1">From</label>
+                <input type="date" 
+                       id="date-from"
+                       class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text"
+                       hx-get="/api/v1/audit"
+                       hx-trigger="change"
+                       hx-include="#search-audit, #filter-event-type, #filter-user, #date-to"
+                       hx-target="#audit-table-body"
+                       hx-swap="innerHTML"
+                       name="date_from" />
+              </div>
+              <div>
+                <label for="date-to" class="block text-sm font-medium text-hms-text mb-1">To</label>
+                <input type="date" 
+                       id="date-to"
+                       class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text"
+                       hx-get="/api/v1/audit"
+                       hx-trigger="change"
+                       hx-include="#search-audit, #filter-event-type, #filter-user, #date-from"
+                       hx-target="#audit-table-body"
+                       hx-swap="innerHTML"
+                       name="date_to" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# Audit log table #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-hms-bg">
+              <tr>
+                <th class="px-4 py-3 text-left font-medium text-hms-text">Timestamp</th>
+                <th class="px-4 py-3 text-left font-medium text-hms-text">Event</th>
+                <th class="px-4 py-3 text-left font-medium text-hms-text">User</th>
+                <th class="px-4 py-3 text-left font-medium text-hms-text">Resource</th>
+                <th class="px-4 py-3 text-left font-medium text-hms-text">Details</th>
+                <th class="px-4 py-3 text-left font-medium text-hms-text">IP Address</th>
+              </tr>
+            </thead>
+            <tbody id="audit-table-body"
+                  hx-get="/api/v1/audit"
+                  hx-trigger="load"
+                  hx-swap="innerHTML">
+              <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-hms-muted">
+                  <div class="flex items-center justify-center gap-3">
+                    <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Loading audit logs...
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {# Pagination container #}
+        <div id="audit-pagination"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+// Export audit log
+function exportAuditLog(format) {
+  var params = new URLSearchParams();
+  var search = document.getElementById('search-audit').value;
+  var eventType = document.getElementById('filter-event-type').value;
+  var user = document.getElementById('filter-user').value;
+  var dateFrom = document.getElementById('date-from').value;
+  var dateTo = document.getElementById('date-to').value;
+  
+  if (search) params.append('search', search);
+  if (eventType) params.append('event_type', eventType);
+  if (user) params.append('user', user);
+  if (dateFrom) params.append('date_from', dateFrom);
+  if (dateTo) params.append('date_to', dateTo);
+  params.append('format', format);
+  
+  window.location.href = '/api/v1/audit/export?' + params.toString();
+}
+
+// Adjust main content margin based on sidebar state
+(function(){
+  var sidebar = document.getElementById('app-sidebar');
+  var mainArea = document.getElementById('main-layout-area');
+  if(!sidebar || !mainArea) return;
+  var obs = new MutationObserver(function(){
+    if(window.innerWidth >= 1024){
+      mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+    } else {
+      mainArea.style.marginLeft = '0';
+    }
+  });
+  obs.observe(sidebar, {attributes:true, attributeFilter:['class']});
+  if(window.innerWidth >= 1024){
+    mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+  }
+})();
+</script>
+{% endblock %}

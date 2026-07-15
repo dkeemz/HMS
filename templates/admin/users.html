@@ -1,0 +1,407 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}User Management — HMS{% endblock %}
+
+{% block body %}
+<div class="flex min-h-screen">
+  {% set current_page = "admin-users" %}
+  {% include "components/sidebar.html" %}
+
+  <div class="flex-1 flex flex-col lg:ml-64 transition-all duration-250" id="main-layout-area">
+    {% include "components/header.html" %}
+
+    <main id="main-content" class="flex-1 p-4 lg:p-6 no-print" role="main" tabindex="-1">
+      <div class="max-w-7xl mx-auto">
+        {# Page header #}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-hms-text">User Management</h2>
+            <p class="text-sm text-hms-muted mt-1">Manage system users, roles, and access</p>
+          </div>
+          <button onclick="HMS.Modal.open('create-user-modal')"
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-hms-primary text-white rounded-lg hover:bg-hms-primary-dark transition-colors text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add User
+          </button>
+        </div>
+
+        {# Stats cards #}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Total Users</p>
+            <p id="stat-total-users" class="text-2xl font-bold text-hms-text mt-1">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Active Users</p>
+            <p id="stat-active-users" class="text-2xl font-bold text-green-600 mt-1">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Inactive Users</p>
+            <p id="stat-inactive-users" class="text-2xl font-bold text-hms-muted mt-1">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Locked Users</p>
+            <p id="stat-locked-users" class="text-2xl font-bold text-red-600 mt-1">—</p>
+          </div>
+        </div>
+
+        {# Search and filters #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg p-4 mb-4">
+          <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex-1">
+              <input type="text" 
+                     id="search-users" 
+                     placeholder="Search by name or email..."
+                     class="w-full border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent"
+                     hx-get="/api/v1/users"
+                     hx-trigger="keyup changed delay:300ms"
+                     hx-include="#filter-role, #filter-status"
+                     hx-target="#users-table-body"
+                     hx-swap="innerHTML"
+                     name="search" />
+            </div>
+            <select id="filter-role" 
+                    class="border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text"
+                    hx-get="/api/v1/users"
+                    hx-trigger="change"
+                    hx-include="#search-users, #filter-status"
+                    hx-target="#users-table-body"
+                    hx-swap="innerHTML"
+                    name="role">
+              <option value="">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="doctor">Doctor</option>
+              <option value="nurse">Nurse</option>
+              <option value="receptionist">Receptionist</option>
+              <option value="lab_tech">Lab Technician</option>
+              <option value="pharmacist">Pharmacist</option>
+            </select>
+            <select id="filter-status"
+                    class="border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text"
+                    hx-get="/api/v1/users"
+                    hx-trigger="change"
+                    hx-include="#search-users, #filter-role"
+                    hx-target="#users-table-body"
+                    hx-swap="innerHTML"
+                    name="status">
+              <option value="">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="locked">Locked</option>
+            </select>
+          </div>
+        </div>
+
+        {# Users table #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-hms-bg">
+              <tr>
+                <th class="px-4 py-3 text-left font-medium text-hms-text">User</th>
+                <th class="px-4 py-3 text-left font-medium text-hms-text">Email</th>
+                <th class="px-4 py-3 text-left font-medium text-hms-text">Role</th>
+                <th class="px-4 py-3 text-left font-medium text-hms-text">Status</th>
+                <th class="px-4 py-3 text-left font-medium text-hms-text">Last Login</th>
+                <th class="px-4 py-3 text-right font-medium text-hms-text">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body"
+                  hx-get="/api/v1/users"
+                  hx-trigger="load"
+                  hx-swap="innerHTML">
+              <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-hms-muted">
+                  <div class="flex items-center justify-center gap-3">
+                    <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Loading users...
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {# Pagination container #}
+        <div id="users-pagination"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+{# Create User Modal #}
+<div id="create-user-modal" 
+     class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50"
+     role="dialog" 
+     aria-modal="true" 
+     aria-labelledby="create-user-modal-title"
+     onclick="if(event.target===this) HMS.Modal.close('create-user-modal')">
+  <div class="bg-hms-surface rounded-lg shadow-xl p-6 w-full max-w-md border border-hms-border"
+       onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between mb-4">
+      <h3 id="create-user-modal-title" class="text-lg font-semibold text-hms-text">Create New User</h3>
+      <button onclick="HMS.Modal.close('create-user-modal')" 
+              class="p-1 rounded-lg text-hms-muted hover:bg-hms-bg hover:text-hms-text"
+              aria-label="Close modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    
+    <form hx-post="/api/v1/users" 
+          hx-target="#users-table-body" 
+          hx-swap="innerHTML"
+          hx-on::after-request="if(event.detail.successful) { this.reset(); HMS.Modal.close('create-user-modal'); htmx.trigger('#users-table-body', 'load'); }">
+      
+      <div class="space-y-4">
+        <div>
+          <label for="create-first-name" class="block text-sm font-medium text-hms-text mb-1">First Name</label>
+          <input type="text" id="create-first-name" name="first_name" required
+                 class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
+        </div>
+        
+        <div>
+          <label for="create-last-name" class="block text-sm font-medium text-hms-text mb-1">Last Name</label>
+          <input type="text" id="create-last-name" name="last_name" required
+                 class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
+        </div>
+        
+        <div>
+          <label for="create-email" class="block text-sm font-medium text-hms-text mb-1">Email</label>
+          <input type="email" id="create-email" name="email" required
+                 class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
+        </div>
+        
+        <div>
+          <label for="create-role" class="block text-sm font-medium text-hms-text mb-1">Role</label>
+          <select id="create-role" name="role" required
+                  class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
+            <option value="">Select a role</option>
+            <option value="admin">Admin</option>
+            <option value="doctor">Doctor</option>
+            <option value="nurse">Nurse</option>
+            <option value="receptionist">Receptionist</option>
+            <option value="lab_tech">Lab Technician</option>
+            <option value="pharmacist">Pharmacist</option>
+          </select>
+        </div>
+        
+        <div>
+          <label for="create-password" class="block text-sm font-medium text-hms-text mb-1">Password</label>
+          <input type="password" id="create-password" name="password" required minlength="8"
+                 class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
+          <p class="text-xs text-hms-muted mt-1">Minimum 8 characters</p>
+        </div>
+      </div>
+      
+      <div class="flex gap-3 justify-end mt-6">
+        <button type="button" 
+                onclick="HMS.Modal.close('create-user-modal')"
+                class="px-4 py-2 border border-hms-border rounded-lg text-sm hover:bg-hms-bg text-hms-text transition-colors">
+          Cancel
+        </button>
+        <button type="submit" 
+                class="px-4 py-2 bg-hms-primary text-white rounded-lg text-sm hover:bg-hms-primary-dark transition-colors">
+          Create User
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# Edit User Modal #}
+<div id="edit-user-modal" 
+     class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50"
+     role="dialog" 
+     aria-modal="true" 
+     aria-labelledby="edit-user-modal-title"
+     onclick="if(event.target===this) HMS.Modal.close('edit-user-modal')">
+  <div class="bg-hms-surface rounded-lg shadow-xl p-6 w-full max-w-md border border-hms-border"
+       onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between mb-4">
+      <h3 id="edit-user-modal-title" class="text-lg font-semibold text-hms-text">Edit User</h3>
+      <button onclick="HMS.Modal.close('edit-user-modal')" 
+              class="p-1 rounded-lg text-hms-muted hover:bg-hms-bg hover:text-hms-text"
+              aria-label="Close modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    
+    <form hx-put="/api/v1/users/{id}" 
+          hx-target="#users-table-body" 
+          hx-swap="innerHTML"
+          hx-on::after-request="if(event.detail.successful) { HMS.Modal.close('edit-user-modal'); htmx.trigger('#users-table-body', 'load'); }">
+      
+      <input type="hidden" id="edit-user-id" name="id" />
+      
+      <div class="space-y-4">
+        <div>
+          <label for="edit-first-name" class="block text-sm font-medium text-hms-text mb-1">First Name</label>
+          <input type="text" id="edit-first-name" name="first_name" required
+                 class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
+        </div>
+        
+        <div>
+          <label for="edit-last-name" class="block text-sm font-medium text-hms-text mb-1">Last Name</label>
+          <input type="text" id="edit-last-name" name="last_name" required
+                 class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
+        </div>
+        
+        <div>
+          <label for="edit-email" class="block text-sm font-medium text-hms-text mb-1">Email</label>
+          <input type="email" id="edit-email" name="email" required
+                 class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
+        </div>
+        
+        <div>
+          <label for="edit-role" class="block text-sm font-medium text-hms-text mb-1">Role</label>
+          <select id="edit-role" name="role" required
+                  class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
+            <option value="admin">Admin</option>
+            <option value="doctor">Doctor</option>
+            <option value="nurse">Nurse</option>
+            <option value="receptionist">Receptionist</option>
+            <option value="lab_tech">Lab Technician</option>
+            <option value="pharmacist">Pharmacist</option>
+          </select>
+        </div>
+        
+        <div>
+          <label for="edit-status" class="block text-sm font-medium text-hms-text mb-1">Status</label>
+          <select id="edit-status" name="status" required
+                  class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="flex gap-3 justify-end mt-6">
+        <button type="button" 
+                onclick="HMS.Modal.close('edit-user-modal')"
+                class="px-4 py-2 border border-hms-border rounded-lg text-sm hover:bg-hms-bg text-hms-text transition-colors">
+          Cancel
+        </button>
+        <button type="submit" 
+                class="px-4 py-2 bg-hms-primary text-white rounded-lg text-sm hover:bg-hms-primary-dark transition-colors">
+          Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# Deactivate User Modal #}
+<div id="deactivate-user-modal" 
+     class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50"
+     role="dialog" 
+     aria-modal="true" 
+     aria-labelledby="deactivate-user-modal-title"
+     onclick="if(event.target===this) HMS.Modal.close('deactivate-user-modal')">
+  <div class="bg-hms-surface rounded-lg shadow-xl p-6 w-full max-w-md border border-hms-border"
+       onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between mb-4">
+      <h3 id="deactivate-user-modal-title" class="text-lg font-semibold text-hms-text">Deactivate User</h3>
+      <button onclick="HMS.Modal.close('deactivate-user-modal')" 
+              class="p-1 rounded-lg text-hms-muted hover:bg-hms-bg hover:text-hms-text"
+              aria-label="Close modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div class="mb-4">
+      <p class="text-sm text-hms-text">Are you sure you want to deactivate this user? They will no longer be able to log in.</p>
+      <p id="deactivate-user-name" class="text-sm font-medium text-hms-text mt-2"></p>
+    </div>
+    
+    <form hx-delete="/api/v1/users/{id}" 
+          hx-target="#users-table-body" 
+          hx-swap="innerHTML"
+          hx-on::after-request="if(event.detail.successful) { HMS.Modal.close('deactivate-user-modal'); htmx.trigger('#users-table-body', 'load'); }">
+      
+      <input type="hidden" id="deactivate-user-id" name="id" />
+      
+      <div class="flex gap-3 justify-end">
+        <button type="button" 
+                onclick="HMS.Modal.close('deactivate-user-modal')"
+                class="px-4 py-2 border border-hms-border rounded-lg text-sm hover:bg-hms-bg text-hms-text transition-colors">
+          Cancel
+        </button>
+        <button type="submit" 
+                class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors">
+          Deactivate User
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Modal management
+HMS.Modal = {
+  open: function(id) {
+    document.getElementById(id).classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  },
+  close: function(id) {
+    document.getElementById(id).classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+};
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('[role="dialog"]:not(.hidden)').forEach(function(modal) {
+      modal.classList.add('hidden');
+    });
+    document.body.style.overflow = '';
+  }
+});
+
+// Edit user function
+function editUser(id, firstName, lastName, email, role, status) {
+  document.getElementById('edit-user-id').value = id;
+  document.getElementById('edit-first-name').value = firstName;
+  document.getElementById('edit-last-name').value = lastName;
+  document.getElementById('edit-email').value = email;
+  document.getElementById('edit-role').value = role;
+  document.getElementById('edit-status').value = status;
+  HMS.Modal.open('edit-user-modal');
+}
+
+// Deactivate user function
+function deactivateUser(id, name) {
+  document.getElementById('deactivate-user-id').value = id;
+  document.getElementById('deactivate-user-name').textContent = 'User: ' + name;
+  HMS.Modal.open('deactivate-user-modal');
+}
+
+// Adjust main content margin based on sidebar state
+(function(){
+  var sidebar = document.getElementById('app-sidebar');
+  var mainArea = document.getElementById('main-layout-area');
+  if(!sidebar || !mainArea) return;
+  var obs = new MutationObserver(function(){
+    if(window.innerWidth >= 1024){
+      mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+    } else {
+      mainArea.style.marginLeft = '0';
+    }
+  });
+  obs.observe(sidebar, {attributes:true, attributeFilter:['class']});
+  if(window.innerWidth >= 1024){
+    mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+  }
+})();
+</script>
+{% endblock %}

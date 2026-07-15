@@ -1,0 +1,325 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Role Management — HMS{% endblock %}
+
+{% block body %}
+<div class="flex min-h-screen">
+  {% set current_page = "admin-roles" %}
+  {% include "components/sidebar.html" %}
+
+  <div class="flex-1 flex flex-col lg:ml-64 transition-all duration-250" id="main-layout-area">
+    {% include "components/header.html" %}
+
+    <main id="main-content" class="flex-1 p-4 lg:p-6 no-print" role="main" tabindex="-1">
+      <div class="max-w-7xl mx-auto">
+        {# Page header #}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-hms-text">Role Management</h2>
+            <p class="text-sm text-hms-muted mt-1">Manage roles and permissions</p>
+          </div>
+          <button onclick="HMS.Modal.open('create-role-modal')"
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-hms-primary text-white rounded-lg hover:bg-hms-primary-dark transition-colors text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Role
+          </button>
+        </div>
+
+        {# Tabs #}
+        <div class="flex gap-4 mb-6 border-b border-hms-border pb-2 overflow-x-auto" role="tablist">
+          <button class="tab-btn px-4 py-2 font-medium text-sm whitespace-nowrap active" 
+                  onclick="showTab('roles')" 
+                  id="tab-roles" 
+                  role="tab" 
+                  aria-selected="true" 
+                  tabindex="0">
+            Roles
+          </button>
+          <button class="tab-btn px-4 py-2 font-medium text-sm whitespace-nowrap" 
+                  onclick="showTab('matrix')" 
+                  id="tab-matrix" 
+                  role="tab" 
+                  aria-selected="false" 
+                  tabindex="-1">
+            Permission Matrix
+          </button>
+          <button class="tab-btn px-4 py-2 font-medium text-sm whitespace-nowrap" 
+                  onclick="showTab('assignments')" 
+                  id="tab-assignments" 
+                  role="tab" 
+                  aria-selected="false" 
+                  tabindex="-1">
+            Role Assignments
+          </button>
+        </div>
+
+        {# Roles Tab #}
+        <div id="section-roles" class="section" role="tabpanel" aria-labelledby="tab-roles">
+          <div class="bg-hms-surface border border-hms-border rounded-lg overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-hms-bg">
+                <tr>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Role Name</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Description</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Users</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Permissions</th>
+                  <th class="px-4 py-3 text-right font-medium text-hms-text">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="roles-table-body"
+                    hx-get="/api/v1/roles"
+                    hx-trigger="load"
+                    hx-swap="innerHTML">
+                <tr>
+                  <td colspan="5" class="px-4 py-8 text-center text-hms-muted">
+                    <div class="flex items-center justify-center gap-3">
+                      <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      Loading roles...
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {# Permission Matrix Tab #}
+        <div id="section-matrix" class="section hidden" role="tabpanel" aria-labelledby="tab-matrix">
+          <div class="bg-hms-surface border border-hms-border rounded-lg overflow-hidden p-4">
+            <div class="mb-4 flex justify-between items-center">
+              <h3 class="text-lg font-semibold text-hms-text">Permission Matrix</h3>
+              <button onclick="savePermissionMatrix()"
+                      class="px-4 py-2 bg-hms-primary text-white rounded-lg text-sm hover:bg-hms-primary-dark transition-colors">
+                Save Changes
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm border-collapse" id="permission-matrix">
+                <thead>
+                  <tr class="bg-hms-bg">
+                    <th class="px-4 py-3 text-left font-medium text-hms-text border border-hms-border">Resource</th>
+                    <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Create</th>
+                    <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Read</th>
+                    <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Update</th>
+                    <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Delete</th>
+                    <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Export</th>
+                  </tr>
+                </thead>
+                <tbody id="permission-matrix-body"
+                      hx-get="/api/v1/permissions/matrix"
+                      hx-trigger="load"
+                      hx-swap="innerHTML">
+                  <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-hms-muted border border-hms-border">
+                      Loading permission matrix...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {# Role Assignments Tab #}
+        <div id="section-assignments" class="section hidden" role="tabpanel" aria-labelledby="tab-assignments">
+          <div class="bg-hms-surface border border-hms-border rounded-lg overflow-hidden p-4">
+            <h3 class="text-lg font-semibold text-hms-text mb-4">Assign Roles to Users</h3>
+            <div class="flex gap-4 mb-4 flex-wrap">
+              <input type="text" 
+                     id="search-assignments" 
+                     placeholder="Search users..."
+                     class="flex-1 min-w-[200px] border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text"
+                     hx-get="/api/v1/users/assignments"
+                     hx-trigger="keyup changed delay:300ms"
+                     hx-target="#assignments-table-body"
+                     hx-swap="innerHTML"
+                     name="search" />
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-hms-bg">
+                  <tr>
+                    <th class="px-4 py-3 text-left font-medium text-hms-text">User</th>
+                    <th class="px-4 py-3 text-left font-medium text-hms-text">Current Role</th>
+                    <th class="px-4 py-3 text-left font-medium text-hms-text">New Role</th>
+                    <th class="px-4 py-3 text-right font-medium text-hms-text">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="assignments-table-body"
+                      hx-get="/api/v1/users/assignments"
+                      hx-trigger="load"
+                      hx-swap="innerHTML">
+                  <tr>
+                    <td colspan="4" class="px-4 py-8 text-center text-hms-muted">
+                      Loading assignments...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+{# Create Role Modal #}
+<div id="create-role-modal" 
+     class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50"
+     role="dialog" 
+     aria-modal="true" 
+     aria-labelledby="create-role-modal-title"
+     onclick="if(event.target===this) HMS.Modal.close('create-role-modal')">
+  <div class="bg-hms-surface rounded-lg shadow-xl p-6 w-full max-w-md border border-hms-border"
+       onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between mb-4">
+      <h3 id="create-role-modal-title" class="text-lg font-semibold text-hms-text">Create New Role</h3>
+      <button onclick="HMS.Modal.close('create-role-modal')" 
+              class="p-1 rounded-lg text-hms-muted hover:bg-hms-bg hover:text-hms-text"
+              aria-label="Close modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    
+    <form hx-post="/api/v1/roles" 
+          hx-target="#roles-table-body" 
+          hx-swap="innerHTML"
+          hx-on::after-request="if(event.detail.successful) { this.reset(); HMS.Modal.close('create-role-modal'); htmx.trigger('#roles-table-body', 'load'); }">
+      
+      <div class="space-y-4">
+        <div>
+          <label for="create-role-name" class="block text-sm font-medium text-hms-text mb-1">Role Name</label>
+          <input type="text" id="create-role-name" name="name" required
+                 class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent"
+                 placeholder="e.g., senior_doctor" />
+        </div>
+        
+        <div>
+          <label for="create-role-description" class="block text-sm font-medium text-hms-text mb-1">Description</label>
+          <textarea id="create-role-description" name="description" rows="3"
+                    class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent"
+                    placeholder="Brief description of this role..."></textarea>
+        </div>
+      </div>
+      
+      <div class="flex gap-3 justify-end mt-6">
+        <button type="button" 
+                onclick="HMS.Modal.close('create-role-modal')"
+                class="px-4 py-2 border border-hms-border rounded-lg text-sm hover:bg-hms-bg text-hms-text transition-colors">
+          Cancel
+        </button>
+        <button type="submit" 
+                class="px-4 py-2 bg-hms-primary text-white rounded-lg text-sm hover:bg-hms-primary-dark transition-colors">
+          Create Role
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Modal management
+HMS.Modal = {
+  open: function(id) {
+    document.getElementById(id).classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  },
+  close: function(id) {
+    document.getElementById(id).classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+};
+
+// Tab management
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(function(s){ s.classList.add('hidden'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+  document.getElementById('section-' + name).classList.remove('hidden');
+  var btn = document.getElementById('tab-' + name);
+  btn.classList.add('active');
+  btn.setAttribute('aria-selected','true');
+}
+
+// Permission matrix functions
+function togglePermission(role, resource, action, checkbox) {
+  // This would typically make an API call to update the permission
+  console.log('Toggle permission:', {role, resource, action, checked: checkbox.checked});
+}
+
+function savePermissionMatrix() {
+  // Collect all permissions and save
+  var permissions = [];
+  document.querySelectorAll('#permission-matrix input[type="checkbox"]').forEach(function(cb) {
+    permissions.push({
+      role: cb.dataset.role,
+      resource: cb.dataset.resource,
+      action: cb.dataset.action,
+      granted: cb.checked
+    });
+  });
+  
+  fetch('/api/v1/permissions/matrix', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ permissions: permissions })
+  }).then(function(r) { return r.json(); })
+    .then(function() { 
+      HMS.Toast.show('Permissions saved successfully', 'success');
+    });
+}
+
+// Role assignment function
+function assignRole(userId, newRole) {
+  fetch('/api/v1/users/' + userId + '/role', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role: newRole })
+  }).then(function(r) { return r.json(); })
+    .then(function() { 
+      htmx.trigger('#assignments-table-body', 'load');
+      HMS.Toast.show('Role assigned successfully', 'success');
+    });
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('[role="dialog"]:not(.hidden)').forEach(function(modal) {
+      modal.classList.add('hidden');
+    });
+    document.body.style.overflow = '';
+  }
+});
+
+// Adjust main content margin based on sidebar state
+(function(){
+  var sidebar = document.getElementById('app-sidebar');
+  var mainArea = document.getElementById('main-layout-area');
+  if(!sidebar || !mainArea) return;
+  var obs = new MutationObserver(function(){
+    if(window.innerWidth >= 1024){
+      mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+    } else {
+      mainArea.style.marginLeft = '0';
+    }
+  });
+  obs.observe(sidebar, {attributes:true, attributeFilter:['class']});
+  if(window.innerWidth >= 1024){
+    mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+  }
+})();
+</script>
+
+<style>
+  .tab-btn.active { border-bottom: 2px solid #1565C0; color: #1565C0; }
+  .dark .tab-btn.active { color: #42A5F5; border-bottom-color: #42A5F5; }
+</style>
+{% endblock %}
