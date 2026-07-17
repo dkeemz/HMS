@@ -76,6 +76,18 @@
       <span class="nav-label">Records</span>
     </a>
 
+    {# Doctors #}
+    <a href="/doctors"
+       class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+              {% if current_page == 'doctors' %}bg-hms-primary/10 text-hms-primary{% else %}text-hms-muted hover:bg-hms-bg hover:text-hms-text{% endif %}"
+       aria-current="{% if current_page == 'doctors' %}page{% endif %}"
+       tabindex="0">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span class="nav-label">Doctors</span>
+    </a>
+
     {# Divider #}
     <div class="border-t border-hms-border my-3"></div>
 
@@ -130,13 +142,25 @@
       <span class="nav-label">Audit Log</span>
     </a>
 
+    {# Admin: Departments #}
+    <a href="/departments"
+       class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+              {% if current_page == 'departments' %}bg-hms-primary/10 text-hms-primary{% else %}text-hms-muted hover:bg-hms-bg hover:text-hms-text{% endif %}"
+       aria-current="{% if current_page == 'departments' %}page{% endif %}"
+       tabindex="0">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+      </svg>
+      <span class="nav-label">Departments</span>
+    </a>
+
     {# Admin: Break Glass #}
     <a href="/admin/break-glass"
        class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
               {% if current_page == 'admin-break-glass' %}bg-hms-primary/10 text-hms-primary{% else %}text-hms-muted hover:bg-hms-bg hover:text-hms-text{% endif %}"
        aria-current="{% if current_page == 'admin-break-glass' %}page{% endif %}"
        tabindex="0">
-      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z"/>
       </svg>
       <span class="nav-label">Break Glass</span>

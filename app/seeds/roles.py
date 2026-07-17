@@ -75,6 +75,12 @@ PERMISSION_SPECS: list[PermSpec] = [
     PermSpec("system", "configure", "Configure system settings"),
     PermSpec("compliance", "read", "View compliance data"),
     PermSpec("compliance", "manage", "Manage compliance policies"),
+    PermSpec("department", "create", "Create departments"),
+    PermSpec("department", "read", "View departments"),
+    PermSpec("department", "update", "Edit departments"),
+    PermSpec("department", "delete", "Delete departments"),
+    PermSpec("doctor", "read", "View doctor profiles"),
+    PermSpec("doctor", "update", "Edit doctor profiles"),
 ]
 
 
@@ -133,6 +139,12 @@ ROLES: dict[str, dict] = {
             "audit_log:read",
             "compliance:read",
             "compliance:manage",
+            "department:create",
+            "department:read",
+            "department:update",
+            "department:delete",
+            "doctor:read",
+            "doctor:update",
         ],
     },
     "Dept Head": {
@@ -167,6 +179,8 @@ ROLES: dict[str, dict] = {
             "radiology_result:read",
             "report:read",
             "report:export",
+            "department:read",
+            "doctor:read",
         ],
     },
     "Doctor": {
@@ -191,6 +205,8 @@ ROLES: dict[str, dict] = {
             "radiology_order:read",
             "radiology_result:read",
             "report:read",
+            "department:read",
+            "doctor:read",
         ],
     },
     "Nurse": {
@@ -208,6 +224,8 @@ ROLES: dict[str, dict] = {
             "lab_order:read",
             "lab_result:read",
             "report:read",
+            "department:read",
+            "doctor:read",
         ],
     },
     "Pharmacist": {

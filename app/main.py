@@ -147,6 +147,23 @@ async def appointments_page(request: Request, user: User = Depends(get_current_u
     return templates.TemplateResponse(request, "appointments/list.html", _user_ctx(user))
 
 
+@app.get("/doctors")
+async def doctors_list(request: Request, user: User = Depends(get_current_user_from_cookie)):
+    return templates.TemplateResponse(request, "doctors/list.html", _user_ctx(user))
+
+
+@app.get("/doctors/{user_id}")
+async def doctor_profile(request: Request, user_id: str, user: User = Depends(get_current_user_from_cookie)):
+    ctx = _user_ctx(user)
+    ctx["user_id"] = user_id
+    return templates.TemplateResponse(request, "doctors/profile.html", ctx)
+
+
+@app.get("/departments")
+async def departments_list(request: Request, user: User = Depends(get_current_user_from_cookie)):
+    return templates.TemplateResponse(request, "departments/list.html", _user_ctx(user))
+
+
 @app.get("/records")
 async def records_page(request: Request, user: User = Depends(get_current_user_from_cookie)):
     return templates.TemplateResponse(request, "records/list.html", _user_ctx(user))

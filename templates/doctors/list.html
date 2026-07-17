@@ -1,0 +1,159 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Doctors — HMS{% endblock %}
+
+{% block body %}
+<div class="flex min-h-screen">
+  {% set current_page = "doctors" %}
+  {% include "components/sidebar.html" %}
+
+  <div class="flex-1 flex flex-col lg:ml-64 transition-all duration-250" id="main-layout-area">
+    {% include "components/header.html" %}
+
+    <main id="main-content" class="flex-1 p-4 lg:p-6 no-print" role="main" tabindex="-1">
+      <div class="max-w-7xl mx-auto">
+        {# Page header #}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-hms-text">Doctors</h2>
+            <p class="text-sm text-hms-muted mt-1">
+              <span id="doctor-count">{{ total_count|default('—', true) }}</span> doctors registered
+            </p>
+          </div>
+          <a href="/doctors/register"
+             class="inline-flex items-center gap-2 px-4 py-2 bg-hms-primary text-white rounded-lg hover:bg-hms-primary-dark transition-colors text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Doctor
+          </a>
+        </div>
+
+        {# Stats cards #}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Total Doctors</p>
+            <p id="stat-total-doctors" class="text-2xl font-bold text-hms-text mt-1">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Available Now</p>
+            <p id="stat-available-now" class="text-2xl font-bold text-green-600 mt-1">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">On Leave</p>
+            <p id="stat-on-leave" class="text-2xl font-bold text-yellow-600 mt-1">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Accepting Patients</p>
+            <p id="stat-accepting" class="text-2xl font-bold text-blue-600 mt-1">—</p>
+          </div>
+        </div>
+
+        {# Search and filters #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg p-4 mb-4">
+          <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex-1">
+              <input type="text"
+                     id="search-doctors"
+                     placeholder="Search by name or license number..."
+                     class="w-full border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent"
+                     hx-get="/api/v1/doctors/list-rows"
+                     hx-trigger="keyup changed delay:300ms"
+                     hx-include="#filter-specialty, #filter-department"
+                     hx-target="#doctors-table-body"
+                     hx-swap="innerHTML"
+                     name="search" />
+            </div>
+            <select id="filter-specialty"
+                    class="border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text"
+                    hx-get="/api/v1/doctors/list-rows"
+                    hx-trigger="change"
+                    hx-include="#search-doctors, #filter-department"
+                    hx-target="#doctors-table-body"
+                    hx-swap="innerHTML"
+                    name="specialty">
+              <option value="">All Specialties</option>
+              <option value="cardiology">Cardiology</option>
+              <option value="dermatology">Dermatology</option>
+              <option value="emergency">Emergency Medicine</option>
+              <option value="general">General Practice</option>
+              <option value="neurology">Neurology</option>
+              <option value="oncology">Oncology</option>
+              <option value="orthopedics">Orthopedics</option>
+              <option value="pediatrics">Pediatrics</option>
+              <option value="psychiatry">Psychiatry</option>
+              <option value="surgery">Surgery</option>
+            </select>
+            <select id="filter-department"
+                    class="border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text"
+                    hx-get="/api/v1/doctors/list-rows"
+                    hx-trigger="change"
+                    hx-include="#search-doctors, #filter-specialty"
+                    hx-target="#doctors-table-body"
+                    hx-swap="innerHTML"
+                    name="department">
+              <option value="">All Departments</option>
+            </select>
+          </div>
+        </div>
+
+        {# Doctors table #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-hms-bg">
+                <tr>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Doctor</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Specialty</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Department</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">License</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Availability</th>
+                  <th class="px-4 py-3 text-right font-medium text-hms-text">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="doctors-table-body"
+                    hx-get="/api/v1/doctors/list-rows"
+                    hx-trigger="load"
+                    hx-swap="innerHTML">
+                <tr>
+                  <td colspan="6" class="px-4 py-8 text-center text-hms-muted">
+                    <div class="flex items-center justify-center gap-3">
+                      <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      Loading doctors...
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {# Pagination container #}
+        <div id="doctors-pagination"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+  var sidebar = document.getElementById('app-sidebar');
+  var mainArea = document.getElementById('main-layout-area');
+  if(!sidebar || !mainArea) return;
+  var obs = new MutationObserver(function(){
+    if(window.innerWidth >= 1024){
+      mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+    } else {
+      mainArea.style.marginLeft = '0';
+    }
+  });
+  obs.observe(sidebar, {attributes:true, attributeFilter:['class']});
+  if(window.innerWidth >= 1024){
+    mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+  }
+})();
+</script>
+{% endblock %}

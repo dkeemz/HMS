@@ -1,0 +1,239 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Departments — HMS{% endblock %}
+
+{% block body %}
+<div class="flex min-h-screen">
+  {% set current_page = "departments" %}
+  {% include "components/sidebar.html" %}
+
+  <div class="flex-1 flex flex-col lg:ml-64 transition-all duration-250" id="main-layout-area">
+    {% include "components/header.html" %}
+
+    <main id="main-content" class="flex-1 p-4 lg:p-6 no-print" role="main" tabindex="-1">
+      <div class="max-w-7xl mx-auto">
+        {# Page header #}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-hms-text">Departments</h2>
+            <p class="text-sm text-hms-muted mt-1">
+              <span id="department-count">{{ total_count|default('—', true) }}</span> departments registered
+            </p>
+          </div>
+          <button onclick="HMS.Modal.open('create-department-modal')"
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-hms-primary text-white rounded-lg hover:bg-hms-primary-dark transition-colors text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Department
+          </button>
+        </div>
+
+        {# Stats cards #}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Total Departments</p>
+            <p id="stat-total-departments" class="text-2xl font-bold text-hms-text mt-1">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Active</p>
+            <p id="stat-active-departments" class="text-2xl font-bold text-green-600 mt-1">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">With Head Assigned</p>
+            <p id="stat-with-head" class="text-2xl font-bold text-blue-600 mt-1">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Sub-departments</p>
+            <p id="stat-sub-departments" class="text-2xl font-bold text-hms-muted mt-1">—</p>
+          </div>
+        </div>
+
+        {# Search and filters #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg p-4 mb-4">
+          <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex-1">
+              <input type="text"
+                     id="search-departments"
+                     placeholder="Search by name or code..."
+                     class="w-full border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent"
+                     hx-get="/api/v1/departments/list-rows"
+                     hx-trigger="keyup changed delay:300ms"
+                     hx-include="#filter-dept-status"
+                     hx-target="#departments-table-body"
+                     hx-swap="innerHTML"
+                     name="search" />
+            </div>
+            <select id="filter-dept-status"
+                    class="border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text"
+                    hx-get="/api/v1/departments/list-rows"
+                    hx-trigger="change"
+                    hx-include="#search-departments"
+                    hx-target="#departments-table-body"
+                    hx-swap="innerHTML"
+                    name="status">
+              <option value="">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        {# Departments table #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-hms-bg">
+                <tr>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Name</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Code</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Parent</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Head</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Status</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Sub-depts</th>
+                  <th class="px-4 py-3 text-right font-medium text-hms-text">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="departments-table-body"
+                    hx-get="/api/v1/departments/list-rows"
+                    hx-trigger="load"
+                    hx-swap="innerHTML">
+                <tr>
+                  <td colspan="7" class="px-4 py-8 text-center text-hms-muted">
+                    <div class="flex items-center justify-center gap-3">
+                      <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      Loading departments...
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {# Pagination container #}
+        <div id="departments-pagination"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+{# Create Department Modal #}
+<div id="create-department-modal"
+     class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="create-department-modal-title"
+     onclick="if(event.target===this) HMS.Modal.close('create-department-modal')">
+  <div class="bg-hms-surface rounded-lg shadow-xl p-6 w-full max-w-md border border-hms-border"
+       onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between mb-4">
+      <h3 id="create-department-modal-title" class="text-lg font-semibold text-hms-text">Create New Department</h3>
+      <button onclick="HMS.Modal.close('create-department-modal')"
+              class="p-1 rounded-lg text-hms-muted hover:bg-hms-bg hover:text-hms-text"
+              aria-label="Close modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form hx-post="/api/v1/departments"
+          hx-target="#departments-table-body"
+          hx-swap="innerHTML"
+          hx-on::after-request="if(event.detail.successful) { this.reset(); HMS.Modal.close('create-department-modal'); htmx.trigger('#departments-table-body', 'load'); }">
+
+      <div class="space-y-4">
+        <div>
+          <label for="create-dept-name" class="block text-sm font-medium text-hms-text mb-1">Name</label>
+          <input type="text" id="create-dept-name" name="name" required
+                 class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
+        </div>
+
+        <div>
+          <label for="create-dept-code" class="block text-sm font-medium text-hms-text mb-1">Code</label>
+          <input type="text" id="create-dept-code" name="code" required
+                 class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
+        </div>
+
+        <div>
+          <label for="create-dept-description" class="block text-sm font-medium text-hms-text mb-1">Description</label>
+          <textarea id="create-dept-description" name="description" rows="3"
+                    class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent"></textarea>
+        </div>
+
+        <div>
+          <label for="create-dept-parent" class="block text-sm font-medium text-hms-text mb-1">Parent Department</label>
+          <select id="create-dept-parent" name="parent_id"
+                  class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
+            <option value="">None (Top Level)</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="create-dept-status" class="block text-sm font-medium text-hms-text mb-1">Status</label>
+          <select id="create-dept-status" name="status" required
+                  class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex gap-3 justify-end mt-6">
+        <button type="button"
+                onclick="HMS.Modal.close('create-department-modal')"
+                class="px-4 py-2 border border-hms-border rounded-lg text-sm hover:bg-hms-bg text-hms-text transition-colors">
+          Cancel
+        </button>
+        <button type="submit"
+                class="px-4 py-2 bg-hms-primary text-white rounded-lg text-sm hover:bg-hms-primary-dark transition-colors">
+          Create Department
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+HMS.Modal = {
+  open: function(id) {
+    document.getElementById(id).classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  },
+  close: function(id) {
+    document.getElementById(id).classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+};
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('[role="dialog"]:not(.hidden)').forEach(function(modal) {
+      modal.classList.add('hidden');
+    });
+    document.body.style.overflow = '';
+  }
+});
+
+(function(){
+  var sidebar = document.getElementById('app-sidebar');
+  var mainArea = document.getElementById('main-layout-area');
+  if(!sidebar || !mainArea) return;
+  var obs = new MutationObserver(function(){
+    if(window.innerWidth >= 1024){
+      mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+    } else {
+      mainArea.style.marginLeft = '0';
+    }
+  });
+  obs.observe(sidebar, {attributes:true, attributeFilter:['class']});
+  if(window.innerWidth >= 1024){
+    mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+  }
+})();
+</script>
+{% endblock %}

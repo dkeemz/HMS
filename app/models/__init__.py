@@ -4,10 +4,12 @@ from app.models.audit_log import AuditLog
 from app.models.break_glass import BreakGlassAccess
 from app.models.break_glass_audit import BreakGlassAudit
 from app.models.condition import Condition
+from app.models.department import Department
+from app.models.doctor_profile import DoctorProfile
 from app.models.family_history import FamilyHistory
+from app.models.insurance_policy import InsurancePolicy
 from app.models.password_history import PasswordHistory
 from app.models.password_reset import PasswordResetToken
-from app.models.insurance_policy import InsurancePolicy
 from app.models.patient import (
     Consent,
     EmergencyContact,
@@ -37,6 +39,8 @@ __all__ = [
     "BreakGlassAudit",
     "Condition",
     "Consent",
+    "Department",
+    "DoctorProfile",
     "EmergencyContact",
     "FamilyHistory",
     "InsurancePolicy",
