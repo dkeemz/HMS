@@ -20,94 +20,66 @@
     {# Login card #}
     <div class="bg-hms-surface rounded-xl border border-hms-border shadow-sm p-6 sm:p-8">
 
-      <div id="login-form-container">
-        <form id="login-form"
-              hx-post="/api/v1/auth/login"
-              hx-target="#login-form-container"
-              hx-swap="innerHTML"
-              hx-encoding="json"
-              hx-indicator="#login-indicator"
-              novalidate>
+      <form id="login-form" novalidate>
+        {# Email #}
+        <div class="mb-4">
+          <label for="login-email" class="block text-sm font-medium text-hms-text mb-1.5">Email address</label>
+          <input type="email"
+                 id="login-email"
+                 name="email"
+                 required
+                 autocomplete="email"
+                 placeholder="you@hospital.org"
+                 class="w-full px-3 py-2.5 rounded-lg border border-hms-border bg-hms-bg text-hms-text text-sm
+                        placeholder-hms-muted focus:border-[#1565C0] focus:ring-1 focus:ring-[#1565C0] outline-none transition-colors"
+                 aria-required="true"/>
+        </div>
 
-          {# Email #}
-          <div class="mb-4">
-            <label for="login-email" class="block text-sm font-medium text-hms-text mb-1.5">Email address</label>
-            <input type="email"
-                   id="login-email"
-                   name="email"
+        {# Password #}
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="login-password" class="block text-sm font-medium text-hms-text">Password</label>
+            <a href="/auth/password-reset" class="text-xs text-[#1565C0] hover:underline">Forgot password?</a>
+          </div>
+          <div class="relative">
+            <input type="password"
+                   id="login-password"
+                   name="password"
                    required
-                   autocomplete="email"
-                   placeholder="you@hospital.org"
+                   autocomplete="current-password"
+                   placeholder="••••••••"
                    class="w-full px-3 py-2.5 rounded-lg border border-hms-border bg-hms-bg text-hms-text text-sm
-                          placeholder-hms-muted focus:border-[#1565C0] focus:ring-1 focus:ring-[#1565C0] outline-none transition-colors"
+                          placeholder-hms-muted focus:border-[#1565C0] focus:ring-1 focus:ring-[#1565C0] outline-none transition-colors pr-10"
                    aria-required="true"/>
+            <button type="button"
+                    onclick="togglePasswordVisibility(this)"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-hms-muted hover:text-hms-text"
+                    aria-label="Show password"
+                    tabindex="0">
+              <svg class="w-4 h-4 eye-open" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <svg class="w-4 h-4 eye-closed hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+            </button>
           </div>
+        </div>
 
-          {# Password #}
-          <div class="mb-4">
-            <div class="flex items-center justify-between mb-1.5">
-              <label for="login-password" class="block text-sm font-medium text-hms-text">Password</label>
-              <a href="/auth/password-reset" class="text-xs text-[#1565C0] hover:underline">Forgot password?</a>
-            </div>
-            <div class="relative">
-              <input type="password"
-                     id="login-password"
-                     name="password"
-                     required
-                     autocomplete="current-password"
-                     placeholder="••••••••"
-                     class="w-full px-3 py-2.5 rounded-lg border border-hms-border bg-hms-bg text-hms-text text-sm
-                            placeholder-hms-muted focus:border-[#1565C0] focus:ring-1 focus:ring-[#1565C0] outline-none transition-colors pr-10"
-                     aria-required="true"/>
-              <button type="button"
-                      onclick="HMS.Auth.togglePasswordVisibility(this)"
-                      class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-hms-muted hover:text-hms-text"
-                      aria-label="Show password"
-                      tabindex="0">
-                <svg class="w-4 h-4 eye-open" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                <svg class="w-4 h-4 eye-closed hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
-              </button>
-            </div>
-          </div>
+        {# Submit #}
+        <button type="submit"
+                class="w-full py-2.5 rounded-lg bg-[#1565C0] hover:bg-[#0D47A1] active:bg-[#0D47A1] text-white text-sm font-semibold
+                       transition-colors focus:ring-2 focus:ring-[#1565C0] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                id="login-submit">
+          <span id="login-label">Sign in</span>
+          <span id="login-spinner" class="hidden">
+            <svg class="animate-spin inline w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            Signing in…
+          </span>
+        </button>
+      </form>
 
-          {# MFA field (hidden by default, shown via HTMX response) #}
-          <div id="mfa-field" class="mb-4 hidden">
-            <label for="login-mfa" class="block text-sm font-medium text-hms-text mb-1.5">MFA Code</label>
-            <input type="text"
-                   id="login-mfa"
-                   name="mfa_code"
-                   inputmode="numeric"
-                   pattern="[0-9]{6}"
-                   maxlength="6"
-                   autocomplete="one-time-code"
-                   placeholder="000000"
-                   class="w-full px-3 py-2.5 rounded-lg border border-hms-border bg-hms-bg text-hms-text text-sm text-center tracking-[0.3em]
-                          placeholder-hms-muted focus:border-[#1565C0] focus:ring-1 focus:ring-[#1565C0] outline-none transition-colors"/>
-            <p class="text-xs text-hms-muted mt-1">Enter the 6-digit code from your authenticator app</p>
-          </div>
-
-          {# Session ID (hidden, for MFA flow) #}
-          <input type="hidden" id="login-session-id" name="session_id" value=""/>
-
-          {# Submit #}
-          <button type="submit"
-                  class="w-full py-2.5 rounded-lg bg-[#1565C0] hover:bg-[#0D47A1] active:bg-[#0D47A1] text-white text-sm font-semibold
-                         transition-colors focus:ring-2 focus:ring-[#1565C0] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  id="login-submit">
-            <span class="htmx-indicator htmx-request-indicator">
-              <svg class="animate-spin inline w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-              </svg>
-              Signing in…
-            </span>
-            <span class="htmx-indicator" style="display:none">Sign in</span>
-          </button>
-        </form>
-      </div>
-
-      {# Error display area #}
-      <div id="login-error" class="hidden mt-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3" role="alert"></div>
+      {# Error display #}
+      <div id="login-error" class="hidden mt-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 text-sm text-red-700 dark:text-red-300" role="alert"></div>
     </div>
 
     {# Footer #}
@@ -116,24 +88,63 @@
       <a href="/terms" class="text-[#1565C0] hover:underline">Terms</a> and
       <a href="/privacy" class="text-[#1565C0] hover:underline">Privacy Policy</a>.
     </p>
-    </div>
   </div>
 </div>
 
 <script>
-document.body.addEventListener('htmx:beforeRequest', function(e) {
-  document.getElementById('login-error').classList.add('hidden');
-});
-document.body.addEventListener('htmx:responseError', function(e) {
-  var errDiv = document.getElementById('login-error');
-  try {
-    var detail = JSON.parse(e.detail.xhr.responseText).detail;
-    if (Array.isArray(detail)) detail = detail.map(function(d){return d.msg||d}).join(', ');
-    errDiv.textContent = detail;
-  } catch(ex) {
-    errDiv.textContent = 'Login failed. Please try again.';
+function togglePasswordVisibility(btn) {
+  var input = btn.closest('.relative').querySelector('input');
+  var eyeOpen = btn.querySelector('.eye-open');
+  var eyeClosed = btn.querySelector('.eye-closed');
+  if (input.type === 'password') {
+    input.type = 'text';
+    eyeOpen.classList.add('hidden');
+    eyeClosed.classList.remove('hidden');
+  } else {
+    input.type = 'password';
+    eyeOpen.classList.remove('hidden');
+    eyeClosed.classList.add('hidden');
   }
-  errDiv.classList.remove('hidden');
+}
+
+document.getElementById('login-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var email = document.getElementById('login-email').value.trim();
+  var password = document.getElementById('login-password').value;
+  var errDiv = document.getElementById('login-error');
+  var submitBtn = document.getElementById('login-submit');
+  var label = document.getElementById('login-label');
+  var spinner = document.getElementById('login-spinner');
+
+  errDiv.classList.add('hidden');
+  submitBtn.disabled = true;
+  label.classList.add('hidden');
+  spinner.classList.remove('hidden');
+
+  try {
+    var resp = await fetch('/api/v1/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: password })
+    });
+
+    if (resp.ok) {
+      window.location.href = '/';
+    } else {
+      var data = await resp.json().catch(function(){ return { detail: 'Login failed.' }; });
+      var msg = data.detail;
+      if (Array.isArray(msg)) msg = msg.map(function(d){ return d.msg || d; }).join(', ');
+      errDiv.textContent = msg || 'Invalid email or password.';
+      errDiv.classList.remove('hidden');
+    }
+  } catch(ex) {
+    errDiv.textContent = 'Network error. Please try again.';
+    errDiv.classList.remove('hidden');
+  } finally {
+    submitBtn.disabled = false;
+    label.classList.remove('hidden');
+    spinner.classList.add('hidden');
+  }
 });
 </script>
 {% endblock %}

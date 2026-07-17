@@ -23,7 +23,7 @@
           <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
             <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Total Users</p>
             <p id="stat-total-users" class="text-2xl font-bold text-hms-text mt-1"
-               hx-get="/api/v1/dashboard/stats"
+               hx-get="/api/v1/dashboard/stats?stat=total_users"
                hx-trigger="load"
                hx-swap="innerHTML"
                hx-target="this">—</p>
@@ -31,7 +31,7 @@
           <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
             <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Active Sessions</p>
             <p id="stat-active-sessions" class="text-2xl font-bold text-hms-text mt-1"
-               hx-get="/api/v1/dashboard/stats"
+               hx-get="/api/v1/dashboard/stats?stat=active_sessions"
                hx-trigger="load"
                hx-swap="innerHTML"
                hx-target="this">—</p>
@@ -39,7 +39,7 @@
           <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
             <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Recent Logins</p>
             <p id="stat-recent-logins" class="text-2xl font-bold text-hms-text mt-1"
-               hx-get="/api/v1/dashboard/stats"
+               hx-get="/api/v1/dashboard/stats?stat=recent_logins"
                hx-trigger="load"
                hx-swap="innerHTML"
                hx-target="this">—</p>
@@ -47,7 +47,7 @@
           <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
             <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Security Alerts</p>
             <p id="stat-security-alerts" class="text-2xl font-bold text-red-600 mt-1"
-               hx-get="/api/v1/dashboard/stats"
+               hx-get="/api/v1/dashboard/stats?stat=security_alerts"
                hx-trigger="load"
                hx-swap="innerHTML"
                hx-target="this">—</p>

@@ -1,0 +1,284 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Audit Integrity — HMS{% endblock %}
+
+{% block body %}
+<div class="flex min-h-screen">
+  {% set current_page = "admin-audit" %}
+  {% include "components/sidebar.html" %}
+
+  <div class="flex-1 flex flex-col lg:ml-64 transition-all duration-250" id="main-layout-area">
+    {% include "components/header.html" %}
+
+    <main id="main-content" class="flex-1 p-4 lg:p-6 no-print" role="main" tabindex="-1">
+      <div class="max-w-7xl mx-auto">
+        {# Page header #}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-hms-text">Audit Integrity</h2>
+            <p class="text-sm text-hms-muted mt-1">Verify hash chain integrity and detect anomalies</p>
+          </div>
+          <button onclick="exportIntegrityReport()"
+                  class="inline-flex items-center gap-2 px-4 py-2 border border-hms-border rounded-lg text-sm font-medium text-hms-text hover:bg-hms-bg transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Export Report
+          </button>
+        </div>
+
+        {# Statistics cards #}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Total Events</p>
+            <p class="text-2xl font-bold text-hms-text mt-1"
+               hx-get="/api/v1/audit-integrity/stats?stat=total"
+               hx-trigger="load" hx-swap="innerHTML" hx-target="this">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Verified</p>
+            <p class="text-2xl font-bold text-green-600 mt-1"
+               hx-get="/api/v1/audit-integrity/stats?stat=verified"
+               hx-trigger="load" hx-swap="innerHTML" hx-target="this">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Anomalies Found</p>
+            <p class="text-2xl font-bold text-red-600 mt-1"
+               hx-get="/api/v1/audit-integrity/stats?stat=anomalies"
+               hx-trigger="load" hx-swap="innerHTML" hx-target="this">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Last Check</p>
+            <p class="text-lg font-bold text-hms-text mt-1"
+               hx-get="/api/v1/audit-integrity/stats?stat=last_check"
+               hx-trigger="load" hx-swap="innerHTML" hx-target="this">—</p>
+          </div>
+        </div>
+
+        {# Hash chain verification #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg p-6 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h3 class="text-lg font-semibold text-hms-text">Hash Chain Verification</h3>
+              <p class="text-sm text-hms-muted mt-1">Verify the integrity of the audit log hash chain</p>
+            </div>
+            <button id="run-verification-btn" onclick="runHashChainVerification()"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-hms-primary text-white rounded-lg hover:bg-hms-primary-dark transition-colors text-sm font-medium">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+              Run Verification
+            </button>
+          </div>
+          <div id="hash-chain-result" class="mt-4 hidden">
+            <div class="rounded-lg p-4 border" id="hash-chain-result-box">
+              <div id="hash-chain-result-content"></div>
+            </div>
+          </div>
+        </div>
+
+        {# Anomaly detection #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg p-6 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h3 class="text-lg font-semibold text-hms-text">Anomaly Detection Results</h3>
+              <p class="text-sm text-hms-muted mt-1">Detected irregularities in audit log patterns</p>
+            </div>
+            <button onclick="runAnomalyDetection()"
+                    class="inline-flex items-center gap-2 px-4 py-2 border border-hms-border rounded-lg text-sm font-medium text-hms-text hover:bg-hms-bg transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              Run Detection
+            </button>
+          </div>
+          <div id="anomaly-results"
+               hx-get="/api/v1/audit-integrity/anomalies"
+               hx-trigger="load"
+               hx-swap="innerHTML">
+            <div class="text-center py-8 text-hms-muted">
+              <div class="flex items-center justify-center gap-3">
+                <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                Loading anomaly results...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {# Integrity checks #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg p-6">
+          <h3 class="text-lg font-semibold text-hms-text mb-4">Integrity Checks</h3>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between p-3 rounded-lg bg-hms-bg border border-hms-border">
+              <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-full bg-green-500 shrink-0" id="check-hash-chain-status"></span>
+                <span class="text-sm font-medium text-hms-text">Hash Chain Continuity</span>
+              </div>
+              <span class="text-sm text-hms-muted" id="check-hash-chain-detail">Verified</span>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-lg bg-hms-bg border border-hms-border">
+              <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-full bg-green-500 shrink-0" id="check-timestamp-status"></span>
+                <span class="text-sm font-medium text-hms-text">Timestamp Consistency</span>
+              </div>
+              <span class="text-sm text-hms-muted" id="check-timestamp-detail">Verified</span>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-lg bg-hms-bg border border-hms-border">
+              <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-full bg-green-500 shrink-0" id="check-sequence-status"></span>
+                <span class="text-sm font-medium text-hms-text">Sequence Number Integrity</span>
+              </div>
+              <span class="text-sm text-hms-muted" id="check-sequence-detail">Verified</span>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-lg bg-hms-bg border border-hms-border">
+              <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-full bg-green-500 shrink-0" id="check-duplication-status"></span>
+                <span class="text-sm font-medium text-hms-text">Duplicate Detection</span>
+              </div>
+              <span class="text-sm text-hms-muted" id="check-duplication-detail">No duplicates found</span>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-lg bg-hms-bg border border-hms-border">
+              <div class="flex items-center gap-3">
+                <span class="w-3 h-3 rounded-full bg-green-500 shrink-0" id="check-tamper-status"></span>
+                <span class="text-sm font-medium text-hms-text">Tamper Detection</span>
+              </div>
+              <span class="text-sm text-hms-muted" id="check-tamper-detail">No tampering detected</span>
+            </div>
+          </div>
+          <div class="mt-4">
+            <button onclick="runAllChecks()"
+                    class="inline-flex items-center gap-2 px-4 py-2 border border-hms-border rounded-lg text-sm font-medium text-hms-text hover:bg-hms-bg transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Run All Checks
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+// Hash chain verification
+function runHashChainVerification() {
+  var btn = document.getElementById('run-verification-btn');
+  var result = document.getElementById('hash-chain-result');
+  var resultBox = document.getElementById('hash-chain-result-box');
+  var resultContent = document.getElementById('hash-chain-result-content');
+
+  btn.disabled = true;
+  btn.innerHTML = '<svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Verifying...';
+
+  fetch('/api/v1/audit-integrity/verify')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      result.classList.remove('hidden');
+      if (data.valid) {
+        resultBox.className = 'rounded-lg p-4 border bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+        resultContent.innerHTML = '<div class="flex items-center gap-2 text-green-700 dark:text-green-300"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-sm font-medium">Hash chain verified — ' + data.events_checked + ' events checked, integrity intact.</span></div>';
+      } else {
+        resultBox.className = 'rounded-lg p-4 border bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+        resultContent.innerHTML = '<div class="flex items-center gap-2 text-red-700 dark:text-red-300"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-sm font-medium">Integrity broken — ' + data.anomalies_found + ' anomalies found.</span></div>';
+      }
+    })
+    .catch(function() {
+      result.classList.remove('hidden');
+      resultBox.className = 'rounded-lg p-4 border bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+      resultContent.innerHTML = '<div class="flex items-center gap-2 text-red-700 dark:text-red-300"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="text-sm font-medium">Verification failed — could not reach server.</span></div>';
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg> Run Verification';
+    });
+}
+
+// Anomaly detection
+function runAnomalyDetection() {
+  var container = document.getElementById('anomaly-results');
+  container.innerHTML = '<div class="text-center py-8 text-hms-muted"><div class="flex items-center justify-center gap-3"><svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Running anomaly detection...</div></div>';
+
+  fetch('/api/v1/audit-integrity/anomalies/detect', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function() {
+      htmx.trigger('#anomaly-results', 'load');
+      HMS.Toast.show('Anomaly detection completed', 'success');
+    })
+    .catch(function() {
+      HMS.Toast.show('Anomaly detection failed', 'error');
+    });
+}
+
+// Run all integrity checks
+function runAllChecks() {
+  var checks = ['hash-chain', 'timestamp', 'sequence', 'duplication', 'tamper'];
+  checks.forEach(function(check) {
+    var dot = document.getElementById('check-' + check + '-status');
+    var detail = document.getElementById('check-' + check + '-detail');
+    if (dot) dot.className = 'w-3 h-3 rounded-full bg-yellow-500 shrink-0 animate-pulse';
+    if (detail) detail.textContent = 'Checking...';
+  });
+
+  fetch('/api/v1/audit-integrity/checks')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      checks.forEach(function(check) {
+        var dot = document.getElementById('check-' + check + '-status');
+        var detail = document.getElementById('check-' + check + '-detail');
+        var passed = data[check] && data[check].passed;
+        if (dot) dot.className = 'w-3 h-3 rounded-full shrink-0 ' + (passed ? 'bg-green-500' : 'bg-red-500');
+        if (detail) detail.textContent = data[check] ? data[check].message : 'Unknown';
+      });
+      HMS.Toast.show('All integrity checks completed', 'success');
+    })
+    .catch(function() {
+      checks.forEach(function(check) {
+        var dot = document.getElementById('check-' + check + '-status');
+        var detail = document.getElementById('check-' + check + '-detail');
+        if (dot) dot.className = 'w-3 h-3 rounded-full bg-red-500 shrink-0';
+        if (detail) detail.textContent = 'Check failed';
+      });
+      HMS.Toast.show('Integrity checks failed', 'error');
+    });
+}
+
+// Export report
+function exportIntegrityReport() {
+  fetch('/api/v1/audit-integrity/export', { method: 'GET' })
+    .then(function(r) { return r.blob(); })
+    .then(function(blob) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'integrity-report-' + new Date().toISOString().slice(0, 10) + '.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+    })
+    .catch(function() {
+      HMS.Toast.show('Export failed', 'error');
+    });
+}
+
+// Sidebar margin adjustment
+(function(){
+  var sidebar = document.getElementById('app-sidebar');
+  var mainArea = document.getElementById('main-layout-area');
+  if(!sidebar || !mainArea) return;
+  var obs = new MutationObserver(function(){
+    if(window.innerWidth >= 1024){
+      mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+    } else {
+      mainArea.style.marginLeft = '0';
+    }
+  });
+  obs.observe(sidebar, {attributes:true, attributeFilter:['class']});
+  if(window.innerWidth >= 1024){
+    mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+  }
+})();
+</script>
+{% endblock %}

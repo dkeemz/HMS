@@ -1,0 +1,265 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Permissions Management — HMS{% endblock %}
+
+{% block body %}
+<div class="flex min-h-screen">
+  {% set current_page = "admin-permissions" %}
+  {% include "components/sidebar.html" %}
+
+  <div class="flex-1 flex flex-col lg:ml-64 transition-all duration-250" id="main-layout-area">
+    {% include "components/header.html" %}
+
+    <main id="main-content" class="flex-1 p-4 lg:p-6 no-print" role="main" tabindex="-1">
+      <div class="max-w-7xl mx-auto">
+        {# Page header #}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-hms-text">Permissions Management</h2>
+            <p class="text-sm text-hms-muted mt-1">Configure resource-level access controls</p>
+          </div>
+          <button onclick="savePermissions()"
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-hms-primary text-white rounded-lg hover:bg-hms-primary-dark transition-colors text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Update Permissions
+          </button>
+        </div>
+
+        {# Permission table by resource #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg overflow-hidden mb-6">
+          <div class="p-4 border-b border-hms-border">
+            <h3 class="text-lg font-semibold text-hms-text">Resource Permissions</h3>
+            <p class="text-sm text-hms-muted mt-1">Manage CRUD and special permissions per resource</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse" id="permissions-table">
+              <thead class="bg-hms-bg">
+                <tr>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text border-b border-hms-border">Resource</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border-b border-hms-border">Create</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border-b border-hms-border">Read</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border-b border-hms-border">Update</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border-b border-hms-border">Delete</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border-b border-hms-border">Special</th>
+                </tr>
+              </thead>
+              <tbody id="permissions-table-body"
+                    hx-get="/api/v1/permissions"
+                    hx-trigger="load"
+                    hx-swap="innerHTML">
+                <tr>
+                  <td colspan="6" class="px-4 py-8 text-center text-hms-muted">
+                    <div class="flex items-center justify-center gap-3">
+                      <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      Loading permissions...
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {# Bulk assign tool #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg p-6 mb-6">
+          <h3 class="text-lg font-semibold text-hms-text mb-4">Bulk Assign Permissions</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label for="bulk-role" class="block text-sm font-medium text-hms-text mb-1">Role</label>
+              <select id="bulk-role"
+                      class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
+                <option value="">Select role</option>
+                <option value="admin">Admin</option>
+                <option value="doctor">Doctor</option>
+                <option value="nurse">Nurse</option>
+                <option value="receptionist">Receptionist</option>
+                <option value="lab_tech">Lab Technician</option>
+                <option value="pharmacist">Pharmacist</option>
+              </select>
+            </div>
+            <div>
+              <label for="bulk-resource" class="block text-sm font-medium text-hms-text mb-1">Resource</label>
+              <select id="bulk-resource"
+                      class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
+                <option value="">Select resource</option>
+                <option value="users">Users</option>
+                <option value="patients">Patients</option>
+                <option value="appointments">Appointments</option>
+                <option value="records">Records</option>
+                <option value="departments">Departments</option>
+                <option value="billing">Billing</option>
+                <option value="pharmacy">Pharmacy</option>
+                <option value="lab">Lab</option>
+                <option value="radiology">Radiology</option>
+                <option value="audit">Audit</option>
+              </select>
+            </div>
+            <div>
+              <label for="bulk-action" class="block text-sm font-medium text-hms-text mb-1">Action</label>
+              <select id="bulk-action"
+                      class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
+                <option value="grant">Grant</option>
+                <option value="revoke">Revoke</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2 mb-4">
+            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-hms-border text-sm text-hms-text cursor-pointer hover:bg-hms-bg transition-colors">
+              <input type="checkbox" name="bulk_create" class="rounded border-hms-border text-hms-primary focus:ring-hms-primary" />
+              Create
+            </label>
+            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-hms-border text-sm text-hms-text cursor-pointer hover:bg-hms-bg transition-colors">
+              <input type="checkbox" name="bulk_read" class="rounded border-hms-border text-hms-primary focus:ring-hms-primary" />
+              Read
+            </label>
+            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-hms-border text-sm text-hms-text cursor-pointer hover:bg-hms-bg transition-colors">
+              <input type="checkbox" name="bulk_update" class="rounded border-hms-border text-hms-primary focus:ring-hms-primary" />
+              Update
+            </label>
+            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-hms-border text-sm text-hms-text cursor-pointer hover:bg-hms-bg transition-colors">
+              <input type="checkbox" name="bulk_delete" class="rounded border-hms-border text-hms-primary focus:ring-hms-primary" />
+              Delete
+            </label>
+            <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-hms-border text-sm text-hms-text cursor-pointer hover:bg-hms-bg transition-colors">
+              <input type="checkbox" name="bulk_special" class="rounded border-hms-border text-hms-primary focus:ring-hms-primary" />
+              Special
+            </label>
+          </div>
+          <button onclick="applyBulkPermissions()"
+                  class="px-4 py-2 bg-hms-primary text-white rounded-lg text-sm hover:bg-hms-primary-dark transition-colors">
+            Apply Bulk Changes
+          </button>
+        </div>
+
+        {# Role-permission matrix #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg overflow-hidden mb-6">
+          <div class="p-4 border-b border-hms-border">
+            <h3 class="text-lg font-semibold text-hms-text">Role-Permission Matrix</h3>
+            <p class="text-sm text-hms-muted mt-1">Overview of all role and permission assignments</p>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse" id="role-permission-matrix">
+              <thead>
+                <tr class="bg-hms-bg">
+                  <th class="px-4 py-3 text-left font-medium text-hms-text border border-hms-border">Role</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Users</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Patients</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Appointments</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Records</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Departments</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Billing</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Pharmacy</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Lab</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Radiology</th>
+                  <th class="px-4 py-3 text-center font-medium text-hms-text border border-hms-border">Audit</th>
+                </tr>
+              </thead>
+              <tbody id="role-permission-matrix-body"
+                    hx-get="/api/v1/permissions/matrix"
+                    hx-trigger="load"
+                    hx-swap="innerHTML">
+                <tr>
+                  <td colspan="11" class="px-4 py-8 text-center text-hms-muted border border-hms-border">
+                    Loading role-permission matrix...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+// Save all permissions
+function savePermissions() {
+  var permissions = [];
+  document.querySelectorAll('#permissions-table input[type="checkbox"]').forEach(function(cb) {
+    permissions.push({
+      resource: cb.dataset.resource,
+      action: cb.dataset.action,
+      granted: cb.checked
+    });
+  });
+
+  fetch('/api/v1/permissions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ permissions: permissions })
+  }).then(function(r) { return r.json(); })
+    .then(function() {
+      HMS.Toast.show('Permissions updated successfully', 'success');
+    })
+    .catch(function() {
+      HMS.Toast.show('Failed to update permissions', 'error');
+    });
+}
+
+// Apply bulk permissions
+function applyBulkPermissions() {
+  var role = document.getElementById('bulk-role').value;
+  var resource = document.getElementById('bulk-resource').value;
+  var action = document.getElementById('bulk-action').value;
+
+  if (!role || !resource) {
+    HMS.Toast.show('Please select a role and resource', 'error');
+    return;
+  }
+
+  var perms = {};
+  document.querySelectorAll('#permissions-table input[type="checkbox"]').forEach(function(cb) {
+    perms[cb.dataset.resource + '_' + cb.dataset.action] = cb.checked;
+  });
+
+  fetch('/api/v1/permissions/bulk', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      role: role,
+      resource: resource,
+      action: action,
+      permissions: {
+        create: document.querySelector('[name="bulk_create"]').checked,
+        read: document.querySelector('[name="bulk_read"]').checked,
+        update: document.querySelector('[name="bulk_update"]').checked,
+        delete: document.querySelector('[name="bulk_delete"]').checked,
+        special: document.querySelector('[name="bulk_special"]').checked
+      }
+    })
+  }).then(function(r) { return r.json(); })
+    .then(function() {
+      htmx.trigger('#permissions-table-body', 'load');
+      htmx.trigger('#role-permission-matrix-body', 'load');
+      HMS.Toast.show('Bulk permissions applied', 'success');
+    })
+    .catch(function() {
+      HMS.Toast.show('Failed to apply bulk permissions', 'error');
+    });
+}
+
+// Sidebar margin adjustment
+(function(){
+  var sidebar = document.getElementById('app-sidebar');
+  var mainArea = document.getElementById('main-layout-area');
+  if(!sidebar || !mainArea) return;
+  var obs = new MutationObserver(function(){
+    if(window.innerWidth >= 1024){
+      mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+    } else {
+      mainArea.style.marginLeft = '0';
+    }
+  });
+  obs.observe(sidebar, {attributes:true, attributeFilter:['class']});
+  if(window.innerWidth >= 1024){
+    mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+  }
+})();
+</script>
+{% endblock %}

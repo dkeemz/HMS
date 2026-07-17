@@ -3,8 +3,10 @@ from fastapi import APIRouter
 from app.api.v1.audit import router as audit_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.break_glass import router as break_glass_router
+from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.insurance import providers_router, router as insurance_router
 from app.api.v1.medical_history import router as medical_history_router
+from app.api.v1.notifications import router as notifications_router
 from app.api.v1.patient_search import router as patient_search_router
 from app.api.v1.password import router as password_router
 from app.api.v1.patients import router as patients_router
@@ -24,6 +26,8 @@ router.include_router(password_router)
 router.include_router(rbac_router)
 router.include_router(audit_router)
 router.include_router(break_glass_router)
+router.include_router(dashboard_router)
+router.include_router(notifications_router)
 router.include_router(patient_search_router)
 router.include_router(patients_router)
 router.include_router(medical_history_router)

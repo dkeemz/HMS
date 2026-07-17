@@ -112,7 +112,7 @@
              aria-haspopup="true"
              tabindex="0">
         <div class="w-8 h-8 rounded-full bg-hms-primary flex items-center justify-center text-white text-sm font-bold" aria-hidden="true">
-          <span id="user-avatar-initials">U</span>
+          <span id="user-avatar-initials">{{ user_initials | default("U") }}</span>
         </div>
         <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -123,8 +123,8 @@
            role="menu"
            aria-label="User actions">
         <div class="p-3 border-b border-hms-border">
-          <p class="text-sm font-semibold text-hms-text" id="user-menu-name">User</p>
-          <p class="text-xs text-hms-muted" id="user-menu-email">user@example.com</p>
+          <p class="text-sm font-semibold text-hms-text" id="user-menu-name">{{ user_full_name | default("User") }}</p>
+          <p class="text-xs text-hms-muted" id="user-menu-email">{{ user_email | default("user@example.com") }}</p>
         </div>
         <div class="py-1">
           <a href="/profile" class="flex items-center gap-2 px-3 py-2 text-sm text-hms-text hover:bg-hms-bg transition-colors" role="menuitem" tabindex="0">

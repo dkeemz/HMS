@@ -1,0 +1,336 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Appointments — HMS{% endblock %}
+
+{% block body %}
+<div class="flex min-h-screen">
+  {% set current_page = "appointments" %}
+  {% include "components/sidebar.html" %}
+
+  <div class="flex-1 flex flex-col lg:ml-64 transition-all duration-250" id="main-layout-area">
+    {% include "components/header.html" %}
+
+    <main id="main-content" class="flex-1 p-4 lg:p-6 no-print" role="main" tabindex="-1">
+      <div class="max-w-7xl mx-auto">
+        {# Page header #}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+          <div>
+            <h2 class="text-2xl font-bold text-hms-text">Appointments</h2>
+            <p class="text-sm text-hms-muted mt-1">Manage patient appointments and scheduling</p>
+          </div>
+          <button onclick="HMS.Modal.open('booking-modal')"
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-hms-primary text-white rounded-lg hover:bg-hms-primary-dark transition-colors text-sm font-medium">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            New Appointment
+          </button>
+        </div>
+
+        {# Stats cards #}
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Today's Appointments</p>
+            <p class="text-2xl font-bold text-hms-text mt-1"
+               hx-get="/api/v1/appointments/stats?stat=today"
+               hx-trigger="load" hx-swap="innerHTML" hx-target="this">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">This Week</p>
+            <p class="text-2xl font-bold text-blue-600 mt-1"
+               hx-get="/api/v1/appointments/stats?stat=week"
+               hx-trigger="load" hx-swap="innerHTML" hx-target="this">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Completed</p>
+            <p class="text-2xl font-bold text-green-600 mt-1"
+               hx-get="/api/v1/appointments/stats?stat=completed"
+               hx-trigger="load" hx-swap="innerHTML" hx-target="this">—</p>
+          </div>
+          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
+            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">No-Shows</p>
+            <p class="text-2xl font-bold text-red-600 mt-1"
+               hx-get="/api/v1/appointments/stats?stat=no_shows"
+               hx-trigger="load" hx-swap="innerHTML" hx-target="this">—</p>
+          </div>
+        </div>
+
+        {# Search and filters #}
+        <div class="bg-hms-surface border border-hms-border rounded-lg p-4 mb-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="lg:col-span-2">
+              <input type="text"
+                     id="search-appointments"
+                     placeholder="Search by patient or doctor..."
+                     class="w-full border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent"
+                     hx-get="/api/v1/appointments"
+                     hx-trigger="keyup changed delay:300ms"
+                     hx-include="#filter-date, #filter-status"
+                     hx-target="#appointments-table-body"
+                     hx-swap="innerHTML"
+                     name="search" />
+            </div>
+            <div>
+              <input type="date"
+                     id="filter-date"
+                     class="w-full border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent"
+                     hx-get="/api/v1/appointments"
+                     hx-trigger="change"
+                     hx-include="#search-appointments, #filter-status"
+                     hx-target="#appointments-table-body"
+                     hx-swap="innerHTML"
+                     name="date" />
+            </div>
+            <div>
+              <select id="filter-status"
+                      class="w-full border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text"
+                      hx-get="/api/v1/appointments"
+                      hx-trigger="change"
+                      hx-include="#search-appointments, #filter-date"
+                      hx-target="#appointments-table-body"
+                      hx-swap="innerHTML"
+                      name="status">
+                <option value="">All Statuses</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {# View toggle #}
+        <div class="flex justify-end mb-4">
+          <div class="inline-flex rounded-lg border border-hms-border overflow-hidden">
+            <button id="view-list" onclick="switchView('list')"
+                    class="px-4 py-2 text-sm font-medium bg-hms-primary text-white transition-colors">
+              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+              </svg>
+              List
+            </button>
+            <button id="view-calendar" onclick="switchView('calendar')"
+                    class="px-4 py-2 text-sm font-medium text-hms-text hover:bg-hms-bg transition-colors">
+              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              Calendar
+            </button>
+          </div>
+        </div>
+
+        {# List view #}
+        <div id="list-view">
+          <div class="bg-hms-surface border border-hms-border rounded-lg overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-hms-bg">
+                <tr>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Patient</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Doctor</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Date & Time</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Type</th>
+                  <th class="px-4 py-3 text-left font-medium text-hms-text">Status</th>
+                  <th class="px-4 py-3 text-right font-medium text-hms-text">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="appointments-table-body"
+                    hx-get="/api/v1/appointments"
+                    hx-trigger="load"
+                    hx-swap="innerHTML">
+                <tr>
+                  <td colspan="6" class="px-4 py-8 text-center text-hms-muted">
+                    <div class="flex items-center justify-center gap-3">
+                      <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                      </svg>
+                      Loading appointments...
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="appointments-pagination"></div>
+        </div>
+
+        {# Calendar view (hidden by default) #}
+        <div id="calendar-view" class="hidden">
+          <div class="bg-hms-surface border border-hms-border rounded-lg p-4">
+            <div class="flex items-center justify-between mb-4">
+              <button onclick="changeWeek(-1)" class="p-2 rounded-lg text-hms-muted hover:bg-hms-bg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <h3 id="calendar-week-label" class="text-lg font-semibold text-hms-text"></h3>
+              <button onclick="changeWeek(1)" class="p-2 rounded-lg text-hms-muted hover:bg-hms-bg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+            <div id="calendar-grid"
+                 class="grid grid-cols-7 gap-px bg-hms-border rounded-lg overflow-hidden"
+                 hx-get="/api/v1/appointments/calendar"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+{# Booking Modal #}
+<div id="booking-modal"
+     class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50"
+     role="dialog" aria-modal="true" aria-labelledby="booking-modal-title"
+     onclick="if(event.target===this) HMS.Modal.close('booking-modal')">
+  <div class="bg-hms-surface rounded-lg shadow-xl p-6 w-full max-w-lg border border-hms-border"
+       onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between mb-4">
+      <h3 id="booking-modal-title" class="text-lg font-semibold text-hms-text">New Appointment</h3>
+      <button onclick="HMS.Modal.close('booking-modal')"
+              class="p-1 rounded-lg text-hms-muted hover:bg-hms-bg hover:text-hms-text"
+              aria-label="Close modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <form hx-post="/api/v1/appointments"
+          hx-target="#appointments-table-body"
+          hx-swap="innerHTML"
+          hx-on::after-request="if(event.detail.successful) { this.reset(); HMS.Modal.close('booking-modal'); htmx.trigger('#appointments-table-body', 'load'); }">
+      <div class="space-y-4">
+        <div>
+          <label for="booking-patient" class="block text-sm font-medium text-hms-text mb-1">Patient</label>
+          <select id="booking-patient" name="patient_id" required
+                  class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
+            <option value="">Select patient</option>
+          </select>
+        </div>
+        <div>
+          <label for="booking-doctor" class="block text-sm font-medium text-hms-text mb-1">Doctor</label>
+          <select id="booking-doctor" name="doctor_id" required
+                  class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
+            <option value="">Select doctor</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="booking-date" class="block text-sm font-medium text-hms-text mb-1">Date</label>
+            <input type="date" id="booking-date" name="date" required
+                   class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
+          </div>
+          <div>
+            <label for="booking-time" class="block text-sm font-medium text-hms-text mb-1">Time</label>
+            <input type="time" id="booking-time" name="time" required
+                   class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
+          </div>
+        </div>
+        <div>
+          <label for="booking-type" class="block text-sm font-medium text-hms-text mb-1">Appointment Type</label>
+          <select id="booking-type" name="type" required
+                  class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
+            <option value="">Select type</option>
+            <option value="consultation">Consultation</option>
+            <option value="follow_up">Follow-up</option>
+            <option value="emergency">Emergency</option>
+            <option value="routine_checkup">Routine Checkup</option>
+            <option value="procedure">Procedure</option>
+          </select>
+        </div>
+        <div>
+          <label for="booking-notes" class="block text-sm font-medium text-hms-text mb-1">Notes</label>
+          <textarea id="booking-notes" name="notes" rows="3"
+                    class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent"
+                    placeholder="Optional notes..."></textarea>
+        </div>
+      </div>
+      <div class="flex gap-3 justify-end mt-6">
+        <button type="button" onclick="HMS.Modal.close('booking-modal')"
+                class="px-4 py-2 border border-hms-border rounded-lg text-sm hover:bg-hms-bg text-hms-text transition-colors">
+          Cancel
+        </button>
+        <button type="submit"
+                class="px-4 py-2 bg-hms-primary text-white rounded-lg text-sm hover:bg-hms-primary-dark transition-colors">
+          Book Appointment
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// View toggle
+function switchView(view) {
+  var listView = document.getElementById('list-view');
+  var calView = document.getElementById('calendar-view');
+  var listBtn = document.getElementById('view-list');
+  var calBtn = document.getElementById('view-calendar');
+  if (view === 'list') {
+    listView.classList.remove('hidden');
+    calView.classList.add('hidden');
+    listBtn.className = 'px-4 py-2 text-sm font-medium bg-hms-primary text-white transition-colors';
+    calBtn.className = 'px-4 py-2 text-sm font-medium text-hms-text hover:bg-hms-bg transition-colors';
+  } else {
+    listView.classList.add('hidden');
+    calView.classList.remove('hidden');
+    calBtn.className = 'px-4 py-2 text-sm font-medium bg-hms-primary text-white transition-colors';
+    listBtn.className = 'px-4 py-2 text-sm font-medium text-hms-text hover:bg-hms-bg transition-colors';
+    htmx.trigger('#calendar-grid', 'load');
+  }
+}
+
+// Calendar week navigation
+var currentWeekOffset = 0;
+function changeWeek(dir) {
+  currentWeekOffset += dir;
+  htmx.trigger('#calendar-grid', 'load');
+}
+
+// Modal management
+HMS.Modal = {
+  open: function(id) {
+    document.getElementById(id).classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  },
+  close: function(id) {
+    document.getElementById(id).classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+};
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('[role="dialog"]:not(.hidden)').forEach(function(modal) {
+      modal.classList.add('hidden');
+    });
+    document.body.style.overflow = '';
+  }
+});
+
+// Sidebar margin adjustment
+(function(){
+  var sidebar = document.getElementById('app-sidebar');
+  var mainArea = document.getElementById('main-layout-area');
+  if(!sidebar || !mainArea) return;
+  var obs = new MutationObserver(function(){
+    if(window.innerWidth >= 1024){
+      mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+    } else {
+      mainArea.style.marginLeft = '0';
+    }
+  });
+  obs.observe(sidebar, {attributes:true, attributeFilter:['class']});
+  if(window.innerWidth >= 1024){
+    mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
+  }
+})();
+</script>
+{% endblock %}
