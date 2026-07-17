@@ -158,10 +158,10 @@ class PasswordPolicyService:
         now = datetime.now(UTC)
 
         if lockout is None:
-            lockout = AccountLockout(user_id=user_id)
+            lockout = AccountLockout(user_id=user_id, failed_attempts=0)
             db.add(lockout)
 
-        lockout.failed_attempts += 1
+        lockout.failed_attempts = (lockout.failed_attempts or 0) + 1
         lockout.last_failed_at = now
 
         if lockout.failed_attempts >= PasswordPolicyService.MAX_FAILED_ATTEMPTS:

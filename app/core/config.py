@@ -29,7 +29,7 @@ class Settings(BaseSettings):
 
     ELASTICSEARCH_URL: str = "http://localhost:9200"
 
-    CORS_ORIGINS: list[str] = ["http://localhost:8000"]
+    CORS_ORIGINS: list[str] = ["http://localhost:8000", "http://hive-chat.xyz", "https://hive-chat.xyz", "app1.barkantejofarms.com.ng", "http://34.29.206.47:5008","http://hms.hive-chat.xyz","https://hms.hive-chat.xyz"]
 
     model_config = {
         "env_file": ".env",

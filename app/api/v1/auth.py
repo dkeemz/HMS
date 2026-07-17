@@ -74,8 +74,17 @@ async def login(
             )
 
     # Attempt Keycloak authentication
+    # Look up KC user by email first to get their KC username
+    kc_username = body.email
     try:
-        token_data = kc.get_token(username=body.email, password=body.password)
+        kc_user = kc.get_user_by_email(body.email)
+        if kc_user is not None:
+            kc_username = kc_user.get("username", body.email)
+    except Exception:
+        pass
+
+    try:
+        token_data = kc.get_token(username=kc_username, password=body.password)
     except Exception:
         # Record failed attempt if user exists
         if existing_user is not None:
@@ -132,6 +141,8 @@ async def login(
     )
     is_new_device = known.scalar_one_or_none() is None
 
+    await invalidate_all_sessions(db, user.id)
+
     session = await create_session(
         db,
         user_id=user.id,
@@ -143,7 +154,7 @@ async def login(
     )
     await db.commit()
 
-    if is_new_device:
+    if is_new_device and not settings.DEBUG:
         # Notify user of new device login
         await NotificationService.send_login_notification(
             user.email,

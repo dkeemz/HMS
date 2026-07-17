@@ -4,7 +4,9 @@ sqlalchemy[asyncio]
 asyncpg
 alembic
 pydantic-settings
+pydantic[email]
 python-jose[cryptography]
+pyjwt
 passlib[bcrypt]
 python-multipart
 celery
@@ -13,6 +15,12 @@ elasticsearch
 python-keycloak
 httpx
 slowapi>=0.1.9
+jinja2
+httptools
 pytest
 pytest-asyncio
+pytest-httpx
 anyio
+aiosqlite
+pytest-playwright
+playwright

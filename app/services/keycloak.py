@@ -45,20 +45,32 @@ class KeycloakService:
     # ---- OIDC helpers ----
 
     def validate_token(self, token: str) -> dict[str, Any]:
-        """Decode and validate a Keycloak access token.
+        """Decode and validate a Keycloak JWT.
 
-        Returns the decoded payload dict on success.  Raises
-        ``KeycloakError`` or ``jwt.JWTError`` on failure.
+        Uses the realm's JWKS keys for RS256 verification.  In DEBUG mode
+        falls back to unverified decode (PyJWT) so dev works without JWKS.
         """
-        return self.openid.decode_token(
-            token,
-            key=settings.KEYCLOAK_CLIENT_SECRET,
-            options={
-                "verify_signature": True,
-                "verify_aud": False,
-                "verify_exp": True,
-            },
-        )
+        try:
+            return self.openid.decode_token(
+                token,
+                options={
+                    "verify_signature": True,
+                    "verify_aud": False,
+                    "verify_exp": True,
+                },
+            )
+        except Exception:
+            if settings.DEBUG:
+                import jwt as pyjwt
+                return pyjwt.decode(
+                    token,
+                    options={
+                        "verify_signature": False,
+                        "verify_aud": False,
+                        "verify_exp": True,
+                    },
+                )
+            raise
 
     def get_well_known(self) -> dict[str, Any]:
         """Fetch the ``.well-known/openid-configuration`` document."""

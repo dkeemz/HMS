@@ -8,7 +8,8 @@ from fastapi.responses import PlainTextResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import CurrentUser, require_role
+from app.core.deps import require_role
+from app.models.user import User
 from app.schemas.audit import (
     AuditLogEntry,
     AuditLogListResponse,
@@ -37,7 +38,7 @@ async def search_audit_logs(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_role("Compliance Officer")),
+    current_user: User = Depends(require_role("Compliance Officer")),
 ):
     """Search audit logs with filters and pagination."""
     logs, total = await AuditService.search_logs(
@@ -90,7 +91,7 @@ async def export_audit_logs(
     start_date: datetime | None = Query(None),
     end_date: datetime | None = Query(None),
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_role("Compliance Officer")),
+    current_user: User = Depends(require_role("Compliance Officer")),
 ):
     """Export audit logs to CSV."""
     await AuditService.log_event(
@@ -136,7 +137,7 @@ async def verify_audit_integrity(
     start_date: datetime = Query(...),
     end_date: datetime = Query(...),
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_role("System Auditor")),
+    current_user: User = Depends(require_role("System Auditor")),
 ):
     """Verify hash chain integrity for a date range."""
     is_valid, broken_ids = await AuditService.verify_hash_chain(
@@ -172,7 +173,7 @@ async def verify_audit_integrity(
 @router.get("/alerts", response_model=SecurityAlertsResponse)
 async def get_security_alerts(
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_role("Compliance Officer")),
+    current_user: User = Depends(require_role("Compliance Officer")),
 ):
     """Get current security alerts from pattern detection."""
     alerts = await AuditService.check_patterns(db)
@@ -201,7 +202,7 @@ async def list_audit_logs(
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    current_user: CurrentUser = Depends(require_role("Compliance Officer")),
+    current_user: User = Depends(require_role("Compliance Officer")),
 ):
     """List recent audit logs."""
     logs, total = await AuditService.search_logs(

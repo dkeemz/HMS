@@ -21,7 +21,7 @@ def upgrade() -> None:
     # Create the partitioned parent table with the same schema
     op.execute("""
         CREATE TABLE audit_logs (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            id UUID DEFAULT gen_random_uuid(),
             user_id UUID REFERENCES users(id) ON DELETE SET NULL,
             action VARCHAR(50) NOT NULL,
             resource VARCHAR(50) NOT NULL,
@@ -32,7 +32,8 @@ def upgrade() -> None:
             timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             previous_hash VARCHAR(64),
             hash VARCHAR(64) NOT NULL,
-            patient_id UUID
+            patient_id UUID,
+            PRIMARY KEY (id, timestamp)
         ) PARTITION BY RANGE (timestamp);
     """)
 

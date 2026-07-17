@@ -51,5 +51,7 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    roles: Mapped[list[UserRole]] = relationship(back_populates="user")
+    roles: Mapped[list[UserRole]] = relationship(
+        back_populates="user", foreign_keys="[UserRole.user_id]",
+    )
     sessions: Mapped[list[UserSession]] = relationship(back_populates="user")

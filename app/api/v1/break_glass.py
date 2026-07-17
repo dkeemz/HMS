@@ -342,7 +342,7 @@ async def _require_doctor(current_user, db: AsyncSession) -> None:
     from app.core.deps import require_role
 
     try:
-        await require_role("doctor")(
+        await require_role("Doctor")(
             current_user=current_user, db=db,
         )
     except HTTPException:

@@ -45,12 +45,11 @@ class AuditService:
             Why   — metadata["why"] or why parameter
             Patient — patient_id
         """
-        # Get the last audit log entry for hash chain (FOR UPDATE to prevent races)
+        # Get the last audit log entry for hash chain
         prev_result = await db.execute(
             select(AuditLog.hash)
             .order_by(AuditLog.timestamp.desc())
             .limit(1)
-            .with_for_update()
         )
         prev_hash = prev_result.scalar_one_or_none() or ""
 

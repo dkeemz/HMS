@@ -58,10 +58,13 @@ async def sync_user_from_keycloak(
     update profile fields if they changed in Keycloak.  Roles are always
     synced from Keycloak to HMS on every login.
     """
-    keycloak_sub: str = payload["sub"]
+    keycloak_sub: str = payload.get("sub", "")
     email: str = payload.get("email", "")
     first_name: str = payload.get("given_name", payload.get("name", ""))
     last_name: str = payload.get("family_name", "")
+
+    if not keycloak_sub:
+        keycloak_sub = email or payload.get("preferred_username", "")
 
     result = await db.execute(
         select(User).where(User.email == email)
@@ -126,7 +129,11 @@ async def get_current_user(
     token = credentials.credentials
     try:
         payload = decode_keycloak_token(token)
-        user_id = payload.get("sub")
+        user_id = (
+            payload.get("sub")
+            or payload.get("preferred_username")
+            or payload.get("email")
+        )
         if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
