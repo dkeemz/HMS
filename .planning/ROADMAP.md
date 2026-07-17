@@ -12,8 +12,8 @@ This roadmap delivers a unified Hospital Health Management System through 8 phas
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & Authentication** - HIPAA-compliant auth, RBAC, and audit logging
-- [ ] **Phase 2: Patient Management** - Patient registration, MRN, demographics, and medical history
+- [x] **Phase 1: Foundation & Authentication** - HIPAA-compliant auth, RBAC, and audit logging ✅
+- [x] **Phase 2: Patient Management** - Patient registration, MRN, demographics, and medical history ✅
 - [ ] **Phase 3: Doctor & Department Management** - Doctor profiles, specialties, department hierarchy, availability
 - [ ] **Phase 4: Scheduling Core** - Appointment booking, availability, calendar views, conflict prevention
 - [ ] **Phase 5: EHR Documentation** - Clinical notes (SOAP), vitals, diagnoses, lab results, document uploads
@@ -37,13 +37,13 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 7 plans
 
 Plans:
-- [ ] 01-01: Project scaffolding — Next.js 15 frontend, NestJS 11 backend, PostgreSQL 17, TypeScript, monorepo structure
-- [ ] 01-02: Database infrastructure — Schema-per-module strategy, migrations, connection pooling, initial compliance tables
-- [ ] 01-03: Keycloak 26.x integration — Self-hosted IdP, user registration, email/password login, MFA enrollment
-- [ ] 01-04: Role-based access control — Doctor, nurse, admin, patient roles with permission matrices and middleware enforcement
-- [ ] 01-05: Session management — Auto-logout for inactive sessions, global logout from any page
-- [ ] 01-06: Audit logging pipeline — Append-only, tamper-evident audit trail for all patient record access (who, what, when, why)
-- [ ] 01-07: Break-glass emergency access — Time-bound override with full audit trail and admin notification
+- [x] 01-01: Project scaffolding — Next.js 15 frontend, NestJS 11 backend, PostgreSQL 17, TypeScript, monorepo structure
+- [x] 01-02: Database infrastructure — Schema-per-module strategy, migrations, connection pooling, initial compliance tables
+- [x] 01-03: Keycloak 26.x integration — Self-hosted IdP, user registration, email/password login, MFA enrollment
+- [x] 01-04: Role-based access control — Doctor, nurse, admin, patient roles with permission matrices and middleware enforcement
+- [x] 01-05: Session management — Auto-logout for inactive sessions, global logout from any page
+- [x] 01-06: Audit logging pipeline — Append-only, tamper-evident audit trail for all patient record access (who, what, when, why)
+- [x] 01-07: Break-glass emergency access — Time-bound override with full audit trail and admin notification
 
 ### Phase 2: Patient Management
 **Goal**: Front desk and clinical staff can register patients, manage demographics, track medical history, and retrieve any patient in under 2 seconds
@@ -59,12 +59,12 @@ Plans:
 **Plans**: 6 plans
 
 Plans:
-- [ ] 02-01: Patient registration service — Demographics intake, MRN auto-generation, validation rules
-- [ ] 02-02: Patient profile UI — Registration forms, profile views, demographic editing
-- [ ] 02-03: Medical history recording — Allergies, conditions, surgeries, family history entry and display
-- [ ] 02-04: Insurance management — Policy entry, provider lookup, coverage tracking per patient
-- [ ] 02-05: Patient search — Multi-field search (name, MRN, phone, DOB) with <2s response, indexed queries
-- [ ] 02-06: Visit history tracking — Chronological visit log with department, doctor, reason, outcome
+- [x] 02-01: Patient registration service — Demographics intake, MRN auto-generation, validation rules
+- [x] 02-02: Patient profile UI — Registration forms, profile views, demographic editing
+- [x] 02-03: Medical history recording — Allergies, conditions, surgeries, family history entry and display
+- [x] 02-04: Insurance management — Policy entry, provider lookup, coverage tracking per patient
+- [x] 02-05: Patient search — Multi-field search (name, MRN, phone, DOB) with <2s response, indexed queries
+- [x] 02-06: Visit history tracking — Chronological visit log with department, doctor, reason, outcome
 
 ### Phase 3: Doctor & Department Management
 **Goal**: Admin can set up the hospital's organizational structure and doctors can manage their profiles and availability status
@@ -186,8 +186,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Authentication | 0/7 | Not started | - |
-| 2. Patient Management | 0/6 | Not started | - |
+| 1. Foundation & Authentication | 7/7 | Complete | 2026-07-14 |
+| 2. Patient Management | 6/6 | Complete | 2026-07-16 |
 | 3. Doctor & Department Management | 0/4 | Not started | - |
 | 4. Scheduling Core | 0/7 | Not started | - |
 | 5. EHR Documentation | 0/6 | Not started | - |
