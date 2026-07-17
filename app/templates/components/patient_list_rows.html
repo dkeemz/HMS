@@ -1,0 +1,50 @@
+{# HTMX fragment: Patient list table rows with pagination #}
+{% if patients %}
+    {% for patient in patients %}
+    <div class="patient-item" onclick="selectPatient('{{ patient.id }}')">
+        <div class="info">
+            <div class="name">{{ patient.first_name }} {{ patient.last_name }}</div>
+            <div class="meta">
+                <span>MRN: {{ patient.mrn }}</span>
+                <span>{{ patient.phone }}</span>
+                {% if patient.date_of_birth %}
+                <span>DOB: {{ patient.date_of_birth.strftime('%d %b %Y') }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <span class="badge badge-{{ patient.status }}">{{ patient.status|capitalize }}</span>
+    </div>
+    {% endfor %}
+
+    {# Pagination #}
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        <button {% if page <= 1 %}disabled{% endif %}
+                hx-get="/api/v1/patients/list?page={{ page - 1 }}"
+                hx-target="#patient-results"
+                hx-swap="innerHTML">&laquo; Prev</button>
+
+        {% for p in range(1, total_pages + 1) %}
+            {% if p <= 3 or p > total_pages - 3 or (p >= page - 1 and p <= page + 1) %}
+                <button class="{% if p == page %}active{% endif %}"
+                        hx-get="/api/v1/patients/list?page={{ p }}"
+                        hx-target="#patient-results"
+                        hx-swap="innerHTML">{{ p }}</button>
+            {% elif p == 4 or p == total_pages - 3 %}
+                <button disabled>...</button>
+            {% endif %}
+        {% endfor %}
+
+        <button {% if page >= total_pages %}disabled{% endif %}
+                hx-get="/api/v1/patients/list?page={{ page + 1 }}"
+                hx-target="#patient-results"
+                hx-swap="innerHTML">Next &raquo;</button>
+    </div>
+    {% endif %}
+
+    <div style="text-align:center;font-size:0.8rem;color:#9ca3af;margin-top:0.5rem">
+        Showing {{ ((page - 1) * 20 + 1) }}–{{ [page * 20, total]|min }} of {{ total }} patients
+    </div>
+{% else %}
+    <div class="empty-state">No patients registered yet.</div>
+{% endif %}

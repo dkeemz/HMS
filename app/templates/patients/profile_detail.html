@@ -1,0 +1,135 @@
+{# HTMX fragment: Patient profile detail panel #}
+<div class="profile-header">
+    <div class="patient-photo">
+        {% if patient.photo_url %}
+            <img src="{{ patient.photo_url }}" alt="{{ patient.first_name }}">
+        {% else %}
+            {{ patient.first_name[0] }}{{ patient.last_name[0] }}
+        {% endif %}
+    </div>
+    <div class="profile-info">
+        <h2>{{ patient.first_name }} {{ patient.last_name }}</h2>
+        <div class="mrn">MRN: {{ patient.mrn }}</div>
+        <div class="meta">
+            <span>DOB: {{ patient.date_of_birth.strftime('%d %b %Y') if patient.date_of_birth else '—' }}</span>
+            <span>Gender: {{ patient.gender }}</span>
+            <span class="badge badge-{{ patient.status }}">{{ patient.status|capitalize }}</span>
+        </div>
+    </div>
+    <div class="profile-actions">
+        <button class="btn btn-outline btn-sm" onclick="window.print()">Print Summary</button>
+    </div>
+</div>
+
+{# Allergy banner (shown only if allergies exist in notes — skeleton for Phase 3) #}
+<div class="allergy-banner" onclick="toggleAllergyBanner(this)" style="display:none" id="allergy-banner">
+    <h3>⚠ <span id="allergy-count">0</span> Active Allerg<span id="allergy-plural">ies</span></h3>
+    <p>Click to view details</p>
+    <div class="allergy-details" id="allergy-details"></div>
+</div>
+
+{# Demographics #}
+<div class="section">
+    <h3>Demographics</h3>
+    <div class="detail-grid">
+        <div class="detail-field">
+            <label>Full Name</label>
+            <p>{{ patient.first_name }} {{ patient.last_name }}</p>
+        </div>
+        <div class="detail-field">
+            <label>Date of Birth</label>
+            <p>{{ patient.date_of_birth.strftime('%d %b %Y') if patient.date_of_birth else '—' }}</p>
+        </div>
+        <div class="detail-field">
+            <label>Gender</label>
+            <p>{{ patient.gender }}</p>
+        </div>
+        <div class="detail-field">
+            <label>Blood Group</label>
+            <p>{{ patient.blood_group or '—' }}</p>
+        </div>
+        <div class="detail-field">
+            <label>NIN</label>
+            <p>{{ patient.nin or '—' }}</p>
+        </div>
+        <div class="detail-field">
+            <label>Preferred Language</label>
+            <p>{{ patient.preferred_language or '—' }}</p>
+        </div>
+    </div>
+</div>
+
+{# Contact Information #}
+<div class="section">
+    <h3>Contact Information</h3>
+    <div class="detail-grid">
+        <div class="detail-field">
+            <label>Phone</label>
+            <p>{{ patient.phone }}</p>
+        </div>
+        <div class="detail-field">
+            <label>Email</label>
+            <p>{{ patient.email or '—' }}</p>
+        </div>
+        <div class="detail-field" style="grid-column: 1 / -1">
+            <label>Address</label>
+            <p>{{ patient.address_street }}, {{ patient.address_city }}, {{ patient.address_state }}{% if patient.address_lga %}, {{ patient.address_lga }}{% endif %}{% if patient.address_postal_code %} {{ patient.address_postal_code }}{% endif %}{% if patient.address_landmark %} ({{ patient.address_landmark }}){% endif %}</p>
+        </div>
+    </div>
+</div>
+
+{# Emergency Contacts #}
+{% if patient.emergency_contacts %}
+<div class="section">
+    <h3>Emergency Contacts</h3>
+    <table>
+        <thead>
+            <tr><th>Name</th><th>Phone</th><th>Relationship</th></tr>
+        </thead>
+        <tbody>
+            {% for contact in patient.emergency_contacts %}
+            <tr>
+                <td>{{ contact.name }}</td>
+                <td>{{ contact.phone }}</td>
+                <td>{{ contact.relationship }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{# Next of Kin #}
+{% if patient.next_of_kin %}
+<div class="section">
+    <h3>Next of Kin</h3>
+    {% for nok in patient.next_of_kin %}
+    <div class="detail-grid">
+        <div class="detail-field">
+            <label>Name</label>
+            <p>{{ nok.name }}</p>
+        </div>
+        <div class="detail-field">
+            <label>Phone</label>
+            <p>{{ nok.phone }}</p>
+        </div>
+        <div class="detail-field">
+            <label>Relationship</label>
+            <p>{{ nok.relationship }}</p>
+        </div>
+        <div class="detail-field">
+            <label>Address</label>
+            <p>{{ nok.address or '—' }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{# Visit History (skeleton for Phase 4) #}
+<div class="section">
+    <h3>Visit History</h3>
+    <div class="empty-state">
+        <p>No visits recorded yet.</p>
+    </div>
+</div>

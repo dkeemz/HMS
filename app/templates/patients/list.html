@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Management — HMS</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+        h1 { font-size: 1.75rem; margin-bottom: 1rem; color: #1a1a1a; }
+        .card { background: #fff; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; text-decoration: none; display: inline-block; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+        .btn-outline { background: transparent; border: 1px solid #d1d5db; color: #374151; }
+        .btn-outline:hover { background: #f9fafb; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.875rem; }
+        .form-group input, .form-group select { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-active { background: #dcfce7; color: #166534; }
+        .badge-inactive { background: #f3f4f6; color: #6b7280; }
+        .badge-deceased { background: #fee2e2; color: #991b1b; }
+        .empty-state { text-align: center; padding: 3rem; color: #9ca3af; }
+        .search-bar { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        .search-bar input { flex: 1; padding: 0.6rem 1rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; }
+        .search-bar input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+        /* Split view layout */
+        .split-view { display: flex; gap: 1.5rem; min-height: calc(100vh - 140px); }
+        .split-left { flex: 0 0 40%; max-width: 40%; overflow-y: auto; }
+        .split-right { flex: 1; overflow-y: auto; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .panel-header h2 { font-size: 1.1rem; color: #374151; }
+
+        /* Patient card in list */
+        .patient-item { padding: 0.75rem 1rem; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.15s; display: flex; justify-content: space-between; align-items: center; }
+        .patient-item:hover { border-color: #2563eb; background: #eff6ff; }
+        .patient-item.selected { border-color: #2563eb; background: #eff6ff; }
+        .patient-item .info { flex: 1; }
+        .patient-item .name { font-weight: 600; font-size: 0.9rem; }
+        .patient-item .meta { font-size: 0.8rem; color: #6b7280; margin-top: 2px; }
+        .patient-item .meta span { margin-right: 0.75rem; }
+
+        /* Pagination */
+        .pagination { display: flex; justify-content: center; gap: 0.5rem; margin-top: 1rem; }
+        .pagination button { padding: 0.35rem 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; cursor: pointer; font-size: 0.8rem; }
+        .pagination button.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Filter panel */
+        .filter-panel { display: none; padding: 1rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #e5e7eb; }
+        .filter-panel.visible { display: block; }
+        .filter-row { display: flex; gap: 1rem; }
+        .filter-row .form-group { flex: 1; }
+
+        /* Detail panel */
+        .detail-placeholder { text-align: center; padding: 4rem 2rem; color: #9ca3af; }
+        .detail-placeholder svg { width: 64px; height: 64px; margin-bottom: 1rem; opacity: 0.3; }
+        .detail-header { display: flex; align-items: center; gap: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; margin-bottom: 1.5rem; }
+        .detail-photo { width: 80px; height: 80px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #9ca3af; flex-shrink: 0; }
+        .detail-info { flex: 1; }
+        .detail-info h2 { font-size: 1.25rem; margin-bottom: 0.25rem; }
+        .detail-info .mrn { font-size: 0.85rem; color: #6b7280; }
+        .detail-section { margin-bottom: 1.5rem; }
+        .detail-section h3 { font-size: 0.95rem; color: #374151; margin-bottom: 0.75rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .detail-field label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+        .detail-field p { font-size: 0.9rem; margin-top: 0.15rem; }
+
+        @media (max-width: 768px) {
+            .split-view { flex-direction: column; }
+            .split-left, .split-right { flex: none; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel-header">
+            <h1>Patient Management</h1>
+            <a href="/patients/register" class="btn btn-primary">+ Register Patient</a>
+        </div>
+
+        <div class="split-view">
+            <!-- Left panel: Search + Patient list -->
+            <div class="split-left">
+                <div class="search-bar">
+                    <input type="text" id="search-input"
+                           placeholder="Search patients by name, MRN, or phone..."
+                           hx-get="/api/v1/patients/search"
+                           hx-trigger="keyup changed delay:300ms"
+                           hx-target="#patient-results"
+                           hx-include="[name='q']"
+                           hx-swap="innerHTML"
+                           name="q">
+                    <button class="btn btn-outline btn-sm" onclick="toggleFilters()">Filters</button>
+                </div>
+
+                <!-- Advanced filters -->
+                <div id="filter-panel" class="filter-panel">
+                    {% include "components/search_filters.html" %}
+                </div>
+
+                <!-- Patient list -->
+                <div id="patient-results" class="card"
+                     hx-get="/api/v1/patients/list"
+                     hx-trigger="load"
+                     hx-swap="innerHTML">
+                    <p style="text-align:center;padding:2rem;color:#9ca3af">Loading patients...</p>
+                </div>
+            </div>
+
+            <!-- Right panel: Patient detail -->
+            <div class="split-right">
+                <div id="patient-detail" class="card">
+                    <div class="detail-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                        <p>Select a patient to view details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function esc(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function toggleFilters() {
+            const panel = document.getElementById('filter-panel');
+            panel.classList.toggle('visible');
+        }
+
+        function selectPatient(patientId) {
+            document.querySelectorAll('.patient-item').forEach(el => el.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            htmx.ajax('GET', '/api/v1/patients/' + patientId + '/detail', {target: '#patient-detail'});
+        }
+
+        // Search with 4-char minimum
+        document.getElementById('search-input').addEventListener('input', function(e) {
+            const val = e.target.value.trim();
+            if (val.length > 0 && val.length < 4) {
+                document.getElementById('patient-results').innerHTML = '<div class="empty-state">Type at least 4 characters to search</div>';
+                return;
+            }
+        });
+
+        // Handle search form submit for filters
+        function applyFilters() {
+            const form = document.getElementById('filter-form');
+            const params = new URLSearchParams(new FormData(form));
+            const q = document.getElementById('search-input').value;
+            if (q) params.set('q', q);
+            htmx.ajax('GET', '/api/v1/patients/search?' + params.toString(), {target: '#patient-results'});
+        }
+
+        function clearFilters() {
+            document.getElementById('filter-form').reset();
+            applyFilters();
+        }
+    </script>
+</body>
+</html>

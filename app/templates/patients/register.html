@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Patient — HMS</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        h1 { font-size: 1.75rem; margin-bottom: 0.5rem; color: #1a1a1a; }
+        .subtitle { color: #6b7280; margin-bottom: 1.5rem; }
+        .card { background: #fff; border-radius: 8px; padding: 2rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        /* Step indicator */
+        .steps { display: flex; justify-content: space-between; margin-bottom: 2rem; position: relative; }
+        .steps::before { content: ''; position: absolute; top: 18px; left: 40px; right: 40px; height: 2px; background: #e5e7eb; z-index: 0; }
+        .step { display: flex; flex-direction: column; align-items: center; position: relative; z-index: 1; flex: 1; }
+        .step .circle { width: 36px; height: 36px; border-radius: 50%; background: #e5e7eb; color: #9ca3af; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem; margin-bottom: 0.5rem; }
+        .step.active .circle { background: #2563eb; color: #fff; }
+        .step.completed .circle { background: #16a34a; color: #fff; }
+        .step .label { font-size: 0.75rem; color: #6b7280; text-align: center; }
+        .step.active .label { color: #2563eb; font-weight: 600; }
+
+        /* Forms */
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.875rem; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;
+        }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .form-group input.valid { border-color: #16a34a; }
+        .form-group input.invalid { border-color: #dc2626; }
+        .form-group .hint { font-size: 0.75rem; color: #6b7280; margin-top: 0.2rem; }
+        .form-group .error { font-size: 0.75rem; color: #dc2626; margin-top: 0.2rem; }
+        .form-row { display: flex; gap: 1rem; }
+        .form-row .form-group { flex: 1; }
+        .form-section { margin-bottom: 2rem; }
+        .form-section h3 { font-size: 1rem; color: #374151; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb; }
+
+        /* Navigation buttons */
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; }
+        .btn { padding: 0.6rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-outline { background: transparent; border: 1px solid #d1d5db; color: #374151; }
+        .btn-outline:hover { background: #f9fafb; }
+        .btn-success { background: #16a34a; color: #fff; }
+        .btn-success:hover { background: #15803d; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Emergency contacts repeatable */
+        .contact-group { border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; position: relative; }
+        .contact-group .remove-btn { position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: none; color: #dc2626; cursor: pointer; font-size: 0.8rem; }
+        .add-contact-btn { background: none; border: 1px dashed #d1d5db; border-radius: 8px; padding: 0.75rem; width: 100%; cursor: pointer; color: #6b7280; font-size: 0.875rem; }
+        .add-contact-btn:hover { border-color: #2563eb; color: #2563eb; }
+
+        /* Step content */
+        .step-content { display: none; }
+        .step-content.active { display: block; }
+
+        /* Skip option */
+        .skip-option { text-align: center; margin-top: 1rem; }
+        .skip-option a { color: #6b7280; font-size: 0.875rem; cursor: pointer; text-decoration: underline; }
+
+        /* Print styles */
+        @media print {
+            body { background: #fff; }
+            .nav-buttons, .steps, .skip-option { display: none !important; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/patients" style="color:#2563eb;text-decoration:none;font-size:0.875rem">&larr; Back to Patient List</a>
+        <h1>Register New Patient</h1>
+        <p class="subtitle">Complete the following steps to register a new patient.</p>
+
+        <!-- Step indicator -->
+        <div class="steps">
+            <div class="step active" id="step-indicator-1">
+                <div class="circle">1</div>
+                <div class="label">Demographics</div>
+            </div>
+            <div class="step" id="step-indicator-2">
+                <div class="circle">2</div>
+                <div class="label">Contacts</div>
+            </div>
+            <div class="step" id="step-indicator-3">
+                <div class="circle">3</div>
+                <div class="label">Insurance</div>
+            </div>
+            <div class="step" id="step-indicator-4">
+                <div class="circle">4</div>
+                <div class="label">Medical History</div>
+            </div>
+        </div>
+
+        <div id="notification"></div>
+
+        <form id="registration-form" class="card">
+            <!-- Step 1: Demographics -->
+            <div id="step-1" class="step-content active">
+                <div class="form-section">
+                    <h3>Personal Information</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="first_name">First Name *</label>
+                            <input type="text" id="first_name" name="first_name" required maxlength="100"
+                                   oninput="validateField(this, v => v.length > 0)">
+                        </div>
+                        <div class="form-group">
+                            <label for="last_name">Last Name *</label>
+                            <input type="text" id="last_name" name="last_name" required maxlength="100"
+                                   oninput="validateField(this, v => v.length > 0)">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date_of_birth">Date of Birth *</label>
+                            <input type="date" id="date_of_birth" name="date_of_birth" required
+                                   onchange="validateField(this, v => v.length > 0)">
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">Gender *</label>
+                            <select id="gender" name="gender" required>
+                                <option value="">Select gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phone">Phone Number *</label>
+                            <input type="tel" id="phone" name="phone" required placeholder="08012345678"
+                                   oninput="validatePhone(this)">
+                            <div class="hint">Nigerian format: 08012345678 or +2348012345678</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="blood_group">Blood Group</label>
+                            <select id="blood_group" name="blood_group">
+                                <option value="">Select</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="nin">NIN (11 digits)</label>
+                            <input type="text" id="nin" name="nin" maxlength="11" pattern="\d{11}"
+                                   oninput="validateField(this, v => v.length === 0 || (v.length === 11 && /^\d+$/.test(v)))">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="preferred_language">Preferred Language</label>
+                        <select id="preferred_language" name="preferred_language">
+                            <option value="English">English</option>
+                            <option value="Yoruba">Yoruba</option>
+                            <option value="Igbo">Igbo</option>
+                            <option value="Hausa">Hausa</option>
+                            <option value="Pidgin">Pidgin</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Address</h3>
+                    <div class="form-group">
+                        <label for="address_street">Street Address *</label>
+                        <input type="text" id="address_street" name="address_street" required maxlength="255">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="address_city">City *</label>
+                            <input type="text" id="address_city" name="address_city" required maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="address_state">State *</label>
+                            <input type="text" id="address_state" name="address_state" required maxlength="100">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="address_lga">LGA</label>
+                            <input type="text" id="address_lga" name="address_lga" maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="address_postal_code">Postal Code</label>
+                            <input type="text" id="address_postal_code" name="address_postal_code" maxlength="10">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="address_landmark">Landmark</label>
+                        <input type="text" id="address_landmark" name="address_landmark" maxlength="255">
+                    </div>
+                </div>
+
+                <div class="nav-buttons">
+                    <a href="/patients" class="btn btn-outline">Cancel</a>
+                    <button type="button" class="btn btn-primary" onclick="goToStep(2)">Next: Contacts &rarr;</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Contacts -->
+            <div id="step-2" class="step-content">
+                <div class="form-section">
+                    <h3>Emergency Contacts</h3>
+                    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem">At least 1 emergency contact required, up to 3.</p>
+                    <div id="emergency-contacts">
+                        <div class="contact-group" data-index="0">
+                            <button type="button" class="remove-btn" onclick="removeContact(this)" style="display:none">Remove</button>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Name *</label>
+                                    <input type="text" name="ec_name_0" required maxlength="200">
+                                </div>
+                                <div class="form-group">
+                                    <label>Phone *</label>
+                                    <input type="tel" name="ec_phone_0" required placeholder="08012345678">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Relationship *</label>
+                                <select name="ec_relationship_0" required>
+                                    <option value="">Select</option>
+                                    <option value="Spouse">Spouse</option>
+                                    <option value="Parent">Parent</option>
+                                    <option value="Child">Child</option>
+                                    <option value="Sibling">Sibling</option>
+                                    <option value="Friend">Friend</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="add-contact-btn" onclick="addContact()">+ Add another emergency contact</button>
+                </div>
+
+                <div class="form-section">
+                    <h3>Next of Kin</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nok_name">Name *</label>
+                            <input type="text" id="nok_name" name="nok_name" required maxlength="200">
+                        </div>
+                        <div class="form-group">
+                            <label for="nok_phone">Phone *</label>
+                            <input type="tel" id="nok_phone" name="nok_phone" required placeholder="08012345678">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nok_relationship">Relationship *</label>
+                            <select id="nok_relationship" name="nok_relationship" required>
+                                <option value="">Select</option>
+                                <option value="Spouse">Spouse</option>
+                                <option value="Parent">Parent</option>
+                                <option value="Child">Child</option>
+                                <option value="Sibling">Sibling</option>
+                                <option value="Friend">Friend</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="nok_address">Address</label>
+                            <input type="text" id="nok_address" name="nok_address">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button type="button" class="btn btn-outline" onclick="goToStep(1)">&larr; Back</button>
+                    <button type="button" class="btn btn-primary" onclick="goToStep(3)">Next: Insurance &rarr;</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Insurance -->
+            <div id="step-3" class="step-content">
+                <div class="form-section">
+                    <h3>Insurance Information</h3>
+                    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem">This step is optional. Self-pay patients can skip.</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="insurance_provider">Provider</label>
+                            <select id="insurance_provider" name="insurance_provider">
+                                <option value="">Select provider (or skip for self-pay)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="policy_number">Policy Number</label>
+                            <input type="text" id="policy_number" name="policy_number">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="coverage_type">Coverage Type</label>
+                            <select id="coverage_type" name="coverage_type">
+                                <option value="">Select</option>
+                                <option value="NHIS">NHIS</option>
+                                <option value="HMO">HMO</option>
+                                <option value="Private">Private</option>
+                                <option value="Corporate">Corporate</option>
+                                <option value="Military">Military</option>
+                                <option value="Tertiary">Tertiary</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="policy_type">Policy Type</label>
+                            <select id="policy_type" name="policy_type">
+                                <option value="">Select</option>
+                                <option value="primary">Primary</option>
+                                <option value="secondary">Secondary</option>
+                                <option value="dependent">Dependent</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button type="button" class="btn btn-outline" onclick="goToStep(2)">&larr; Back</button>
+                    <div>
+                        <span class="skip-option" style="margin-right:1rem">
+                            <a onclick="goToStep(4)">Skip (self-pay)</a>
+                        </span>
+                        <button type="button" class="btn btn-primary" onclick="goToStep(4)">Next: Medical History &rarr;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Medical History -->
+            <div id="step-4" class="step-content">
+                <div class="form-section">
+                    <h3>Allergies</h3>
+                    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem">Record known allergies. This section is optional.</p>
+                    <div id="allergies-list">
+                        <div class="contact-group" data-index="0">
+                            <button type="button" class="remove-btn" onclick="removeGroup(this, 'allergies-list')" style="display:none">Remove</button>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Allergy Name</label>
+                                    <input type="text" name="allergy_name_0" placeholder="e.g. Penicillin">
+                                </div>
+                                <div class="form-group">
+                                    <label>Severity</label>
+                                    <select name="allergy_severity_0">
+                                        <option value="mild">Mild</option>
+                                        <option value="moderate">Moderate</option>
+                                        <option value="severe">Severe</option>
+                                        <option value="life-threatening">Life-threatening</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Reaction</label>
+                                    <input type="text" name="allergy_reaction_0" placeholder="e.g. Rash, swelling">
+                                </div>
+                                <div class="form-group">
+                                    <label>Onset Date</label>
+                                    <input type="date" name="allergy_onset_0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="add-contact-btn" onclick="addAllergy()">+ Add another allergy</button>
+                </div>
+
+                <div class="form-section">
+                    <h3>Medical Conditions</h3>
+                    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem">Record known conditions. This section is optional.</p>
+                    <div id="conditions-list">
+                        <div class="contact-group" data-index="0">
+                            <button type="button" class="remove-btn" onclick="removeGroup(this, 'conditions-list')" style="display:none">Remove</button>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Condition Name</label>
+                                    <input type="text" name="condition_name_0" placeholder="e.g. Hypertension">
+                                </div>
+                                <div class="form-group">
+                                    <label>ICD-10 Code</label>
+                                    <input type="text" name="condition_icd10_0" placeholder="e.g. I10">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Onset Date</label>
+                                    <input type="date" name="condition_onset_0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select name="condition_status_0">
+                                        <option value="active">Active</option>
+                                        <option value="chronic">Chronic</option>
+                                        <option value="resolved">Resolved</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="add-contact-btn" onclick="addCondition()">+ Add another condition</button>
+                </div>
+
+                <div class="nav-buttons">
+                    <button type="button" class="btn btn-outline" onclick="goToStep(3)">&larr; Back</button>
+                    <div>
+                        <button type="button" class="btn btn-outline" onclick="window.print()" style="margin-right:0.5rem">Print Summary</button>
+                        <button type="button" class="btn btn-success" onclick="submitRegistration()">Complete Registration</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let contactCount = 1;
+        let allergyCount = 1;
+        let conditionCount = 1;
+
+        function goToStep(step) {
+            document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('step-' + step).classList.add('active');
+
+            for (let i = 1; i <= 4; i++) {
+                const ind = document.getElementById('step-indicator-' + i);
+                ind.classList.remove('active', 'completed');
+                if (i < step) ind.classList.add('completed');
+                if (i === step) ind.classList.add('active');
+            }
+            currentStep = step;
+        }
+
+        function validateField(input, validator) {
+            if (validator(input.value)) {
+                input.classList.remove('invalid');
+                input.classList.add('valid');
+            } else {
+                input.classList.remove('valid');
+                input.classList.add('invalid');
+            }
+        }
+
+        function validatePhone(input) {
+            const pattern = /^(\+234|0)[789]\d{9}$/;
+            if (input.value.length === 0) {
+                input.classList.remove('valid', 'invalid');
+            } else if (pattern.test(input.value)) {
+                input.classList.remove('invalid');
+                input.classList.add('valid');
+            } else {
+                input.classList.remove('valid');
+                input.classList.add('invalid');
+            }
+        }
+
+        function addContact() {
+            if (contactCount >= 3) return;
+            const idx = contactCount++;
+            const html = `
+                <div class="contact-group" data-index="${idx}">
+                    <button type="button" class="remove-btn" onclick="removeContact(this)">Remove</button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Name *</label>
+                            <input type="text" name="ec_name_${idx}" required maxlength="200">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone *</label>
+                            <input type="tel" name="ec_phone_${idx}" required placeholder="08012345678">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Relationship *</label>
+                        <select name="ec_relationship_${idx}" required>
+                            <option value="">Select</option>
+                            <option value="Spouse">Spouse</option>
+                            <option value="Parent">Parent</option>
+                            <option value="Child">Child</option>
+                            <option value="Sibling">Sibling</option>
+                            <option value="Friend">Friend</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>`;
+            document.getElementById('emergency-contacts').insertAdjacentHTML('beforeend', html);
+            updateRemoveButtons('emergency-contacts');
+        }
+
+        function removeContact(btn) {
+            btn.closest('.contact-group').remove();
+            contactCount--;
+            updateRemoveButtons('emergency-contacts');
+        }
+
+        function addAllergy() {
+            const idx = allergyCount++;
+            const html = `
+                <div class="contact-group" data-index="${idx}">
+                    <button type="button" class="remove-btn" onclick="removeGroup(this, 'allergies-list')">Remove</button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Allergy Name</label>
+                            <input type="text" name="allergy_name_${idx}" placeholder="e.g. Penicillin">
+                        </div>
+                        <div class="form-group">
+                            <label>Severity</label>
+                            <select name="allergy_severity_${idx}">
+                                <option value="mild">Mild</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="severe">Severe</option>
+                                <option value="life-threatening">Life-threatening</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Reaction</label>
+                            <input type="text" name="allergy_reaction_${idx}" placeholder="e.g. Rash, swelling">
+                        </div>
+                        <div class="form-group">
+                            <label>Onset Date</label>
+                            <input type="date" name="allergy_onset_${idx}">
+                        </div>
+                    </div>
+                </div>`;
+            document.getElementById('allergies-list').insertAdjacentHTML('beforeend', html);
+            updateRemoveButtons('allergies-list');
+        }
+
+        function addCondition() {
+            const idx = conditionCount++;
+            const html = `
+                <div class="contact-group" data-index="${idx}">
+                    <button type="button" class="remove-btn" onclick="removeGroup(this, 'conditions-list')">Remove</button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Condition Name</label>
+                            <input type="text" name="condition_name_${idx}" placeholder="e.g. Hypertension">
+                        </div>
+                        <div class="form-group">
+                            <label>ICD-10 Code</label>
+                            <input type="text" name="condition_icd10_${idx}" placeholder="e.g. I10">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Onset Date</label>
+                            <input type="date" name="condition_onset_${idx}">
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="condition_status_${idx}">
+                                <option value="active">Active</option>
+                                <option value="chronic">Chronic</option>
+                                <option value="resolved">Resolved</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>`;
+            document.getElementById('conditions-list').insertAdjacentHTML('beforeend', html);
+            updateRemoveButtons('conditions-list');
+        }
+
+        function removeGroup(btn, containerId) {
+            btn.closest('.contact-group').remove();
+            updateRemoveButtons(containerId);
+        }
+
+        function updateRemoveButtons(containerId) {
+            const groups = document.querySelectorAll('#' + containerId + ' .contact-group');
+            groups.forEach((g, i) => {
+                const btn = g.querySelector('.remove-btn');
+                if (btn) btn.style.display = groups.length <= 1 ? 'none' : 'block';
+            });
+        }
+
+        function submitRegistration() {
+            const form = document.getElementById('registration-form');
+            const data = new FormData(form);
+
+            // Build payload matching PatientCreate schema
+            const emergencyContacts = [];
+            for (let i = 0; i < contactCount; i++) {
+                const name = data.get('ec_name_' + i);
+                const phone = data.get('ec_phone_' + i);
+                const relationship = data.get('ec_relationship_' + i);
+                if (name && phone && relationship) {
+                    emergencyContacts.push({ name, phone, relationship });
+                }
+            }
+
+            const payload = {
+                first_name: data.get('first_name'),
+                last_name: data.get('last_name'),
+                date_of_birth: data.get('date_of_birth'),
+                gender: data.get('gender'),
+                phone: data.get('phone'),
+                email: data.get('email') || null,
+                blood_group: data.get('blood_group') || null,
+                nin: data.get('nin') || null,
+                preferred_language: data.get('preferred_language') || null,
+                address_street: data.get('address_street'),
+                address_city: data.get('address_city'),
+                address_state: data.get('address_state'),
+                address_lga: data.get('address_lga') || null,
+                address_postal_code: data.get('address_postal_code') || null,
+                address_landmark: data.get('address_landmark') || null,
+                emergency_contacts: emergencyContacts,
+                next_of_kin: {
+                    name: data.get('nok_name'),
+                    phone: data.get('nok_phone'),
+                    relationship: data.get('nok_relationship'),
+                    address: data.get('nok_address') || null,
+                },
+            };
+
+            fetch('/api/v1/patients/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            })
+            .then(r => r.json().then(d => ({ status: r.status, data: d })))
+            .then(({ status, data }) => {
+                if (status === 201) {
+                    window.location.href = '/patients/' + data.id;
+                } else {
+                    const msg = data.detail || 'Registration failed';
+                    document.getElementById('notification').innerHTML =
+                        '<div style="padding:0.75rem 1rem;background:#fee2e2;color:#991b1b;border-radius:6px;margin-bottom:1rem">' + esc(msg) + '</div>';
+                }
+            })
+            .catch(err => {
+                document.getElementById('notification').innerHTML =
+                    '<div style="padding:0.75rem 1rem;background:#fee2e2;color:#991b1b;border-radius:6px;margin-bottom:1rem">Network error. Please try again.</div>';
+            });
+        }
+
+        function esc(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        // Load insurance providers on step 3
+        document.addEventListener('DOMContentLoaded', function() {
+            const observer = new MutationObserver(function() {
+                if (document.getElementById('step-3').classList.contains('active')) {
+                    fetch('/api/v1/patients/').then(() => {}).catch(() => {});
+                    // Providers would be loaded from an API endpoint in a real implementation
+                    observer.disconnect();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Medical History - {{ patient.first_name }} {{ patient.last_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Medical History</h1>
+    <p class="mt-1 text-sm text-gray-500">
+      Patient: {{ patient.first_name }} {{ patient.last_name }} (MRN: {{ patient.mrn }})
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Allergies Section -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-medium text-gray-900">Allergies</h2>
+        <button hx-get="/patients/{{ patient.id }}/medical-history/allergies/new"
+                hx-target="#allergy-form"
+                hx-swap="innerHTML"
+                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700">
+          Add Allergy
+        </button>
+      </div>
+      <div id="allergy-list">
+        {% for allergy in allergies %}
+        <div class="border border-red-200 rounded-md p-3 mb-3">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="font-medium text-gray-900">{{ allergy.name }}</p>
+              <p class="text-sm text-gray-500">Severity: {{ allergy.severity }}</p>
+              {% if allergy.reaction %}
+              <p class="text-sm text-gray-500">Reaction: {{ allergy.reaction }}</p>
+              {% endif %}
+            </div>
+            <div class="flex space-x-2">
+              <button hx-get="/patients/{{ patient.id }}/medical-history/allergies/{{ allergy.id }}/edit"
+                      hx-target="#allergy-form"
+                      hx-swap="innerHTML"
+                      class="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
+              <button hx-delete="/patients/{{ patient.id }}/medical-history/allergies/{{ allergy.id }}"
+                      hx-target.closest="div"
+                      hx-swap="outerHTML"
+                      hx-confirm="Are you sure?"
+                      class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div id="allergy-form"></div>
+    </div>
+
+    <!-- Conditions Section -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-medium text-gray-900">Conditions</h2>
+        <button hx-get="/patients/{{ patient.id }}/medical-history/conditions/new"
+                hx-target="#condition-form"
+                hx-swap="innerHTML"
+                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700">
+          Add Condition
+        </button>
+      </div>
+      <div id="condition-list">
+        {% for condition in conditions %}
+        <div class="border border-blue-200 rounded-md p-3 mb-3">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="font-medium text-gray-900">{{ condition.name }}</p>
+              <p class="text-sm text-gray-500">Status: {{ condition.clinical_status }}</p>
+              {% if condition.severity %}
+              <p class="text-sm text-gray-500">Severity: {{ condition.severity }}</p>
+              {% endif %}
+            </div>
+            <div class="flex space-x-2">
+              <button hx-get="/patients/{{ patient.id }}/medical-history/conditions/{{ condition.id }}/edit"
+                      hx-target="#condition-form"
+                      hx-swap="innerHTML"
+                      class="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
+              <button hx-delete="/patients/{{ patient.id }}/medical-history/conditions/{{ condition.id }}"
+                      hx-target.closest="div"
+                      hx-swap="outerHTML"
+                      hx-confirm="Are you sure?"
+                      class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div id="condition-form"></div>
+    </div>
+
+    <!-- Surgeries Section -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-medium text-gray-900">Surgeries</h2>
+        <button hx-get="/patients/{{ patient.id }}/medical-history/surgeries/new"
+                hx-target="#surgery-form"
+                hx-swap="innerHTML"
+                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700">
+          Add Surgery
+        </button>
+      </div>
+      <div id="surgery-list">
+        {% for surgery in surgeries %}
+        <div class="border border-green-200 rounded-md p-3 mb-3">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="font-medium text-gray-900">{{ surgery.name }}</p>
+              <p class="text-sm text-gray-500">Date: {{ surgery.procedure_date }}</p>
+              {% if surgery.surgeon %}
+              <p class="text-sm text-gray-500">Surgeon: {{ surgery.surgeon }}</p>
+              {% endif %}
+            </div>
+            <div class="flex space-x-2">
+              <button hx-get="/patients/{{ patient.id }}/medical-history/surgeries/{{ surgery.id }}/edit"
+                      hx-target="#surgery-form"
+                      hx-swap="innerHTML"
+                      class="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
+              <button hx-delete="/patients/{{ patient.id }}/medical-history/surgeries/{{ surgery.id }}"
+                      hx-target.closest="div"
+                      hx-swap="outerHTML"
+                      hx-confirm="Are you sure?"
+                      class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div id="surgery-form"></div>
+    </div>
+
+    <!-- Family History Section -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-medium text-gray-900">Family History</h2>
+        <button hx-get="/patients/{{ patient.id }}/medical-history/family/new"
+                hx-target="#family-form"
+                hx-swap="innerHTML"
+                class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-purple-600 hover:bg-purple-700">
+          Add Family History
+        </button>
+      </div>
+      <div id="family-list">
+        {% for item in family_history %}
+        <div class="border border-purple-200 rounded-md p-3 mb-3">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="font-medium text-gray-900">{{ item.condition_name }}</p>
+              <p class="text-sm text-gray-500">Relationship: {{ item.relationship_type }}</p>
+              {% if item.onset_age %}
+              <p class="text-sm text-gray-500">Onset Age: {{ item.onset_age }}</p>
+              {% endif %}
+            </div>
+            <div class="flex space-x-2">
+              <button hx-get="/patients/{{ patient.id }}/medical-history/family/{{ item.id }}/edit"
+                      hx-target="#family-form"
+                      hx-swap="innerHTML"
+                      class="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
+              <button hx-delete="/patients/{{ patient.id }}/medical-history/family/{{ item.id }}"
+                      hx-target.closest="div"
+                      hx-swap="outerHTML"
+                      hx-confirm="Are you sure?"
+                      class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div id="family-form"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

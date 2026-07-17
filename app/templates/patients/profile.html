@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Profile — HMS</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+        h1 { font-size: 1.75rem; margin-bottom: 1rem; color: #1a1a1a; }
+        .card { background: #fff; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; text-decoration: none; display: inline-block; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-outline { background: transparent; border: 1px solid #d1d5db; color: #374151; }
+        .btn-outline:hover { background: #f9fafb; }
+        .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-active { background: #dcfce7; color: #166534; }
+        .badge-inactive { background: #f3f4f6; color: #6b7280; }
+        .badge-deceased { background: #fee2e2; color: #991b1b; }
+        .badge-severe { background: #dc2626; color: #fff; }
+        .badge-moderate { background: #f59e0b; color: #fff; }
+        .badge-mild { background: #eab308; color: #fff; }
+        .empty-state { text-align: center; padding: 2rem; color: #9ca3af; }
+
+        /* Profile header */
+        .profile-header { display: flex; align-items: center; gap: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; margin-bottom: 1.5rem; }
+        .patient-photo { width: 90px; height: 90px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #9ca3af; flex-shrink: 0; overflow: hidden; }
+        .patient-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-info { flex: 1; }
+        .profile-info h2 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+        .profile-info .mrn { font-size: 0.9rem; color: #6b7280; }
+        .profile-info .meta { font-size: 0.85rem; color: #6b7280; margin-top: 0.5rem; }
+        .profile-info .meta span { margin-right: 1rem; }
+        .profile-actions { display: flex; gap: 0.5rem; }
+
+        /* Allergy banner */
+        .allergy-banner { background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; padding: 1rem 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; cursor: pointer; }
+        .allergy-banner h3 { font-size: 1rem; margin-bottom: 0.25rem; }
+        .allergy-banner p { font-size: 0.85rem; opacity: 0.9; }
+        .allergy-details { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.3); }
+        .allergy-banner.expanded .allergy-details { display: block; }
+        .allergy-item { padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .allergy-item:last-child { border-bottom: none; }
+
+        /* Sections */
+        .section { margin-bottom: 1.5rem; }
+        .section h3 { font-size: 1rem; color: #374151; margin-bottom: 0.75rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        .detail-field label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+        .detail-field p { font-size: 0.9rem; margin-top: 0.15rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.6rem 0.75rem; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+        th { font-weight: 600; background: #fafafa; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; }
+
+        /* Timeline */
+        .timeline { position: relative; padding-left: 2rem; }
+        .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: #e5e7eb; }
+        .timeline-entry { position: relative; margin-bottom: 1.5rem; padding: 1rem; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; }
+        .timeline-entry::before { content: ''; position: absolute; left: -1.75rem; top: 1.25rem; width: 10px; height: 10px; border-radius: 50%; background: #2563eb; border: 2px solid #fff; }
+        .timeline-entry .date { font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem; }
+        .timeline-entry .content { font-size: 0.9rem; }
+
+        @media print {
+            body { background: #fff; }
+            .btn, .profile-actions { display: none !important; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/patients" style="color:#2563eb;text-decoration:none;font-size:0.875rem">&larr; Back to Patient List</a>
+
+        <div id="patient-profile" class="card"
+             hx-get="/api/v1/patients/{{ patient_id }}/detail"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p style="text-align:center;padding:2rem;color:#9ca3af">Loading patient profile...</p>
+        </div>
+    </div>
+
+    <script>
+        function esc(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function toggleAllergyBanner(el) {
+            el.classList.toggle('expanded');
+        }
+    </script>
+</body>
+</html>

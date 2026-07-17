@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insurance Management — HMS</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        h1 { font-size: 1.75rem; margin-bottom: 1.5rem; color: #1a1a1a; }
+        .card { background: #fff; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #eee; }
+        th { font-weight: 600; background: #fafafa; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-verified { background: #dbeafe; color: #1e40af; }
+        .badge-active { background: #d1fae5; color: #065f46; }
+        .badge-expired { background: #fee2e2; color: #991b1b; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-success { background: #059669; color: #fff; }
+        .btn-success:hover { background: #047857; }
+        .btn-warning { background: #d97706; color: #fff; }
+        .btn-warning:hover { background: #b45309; }
+        .btn-danger { background: #dc2626; color: #fff; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-sm { padding: 0.25rem 0.75rem; font-size: 0.8rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.875rem; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.875rem;
+        }
+        .form-row { display: flex; gap: 1rem; }
+        .form-row .form-group { flex: 1; }
+        .empty-state { text-align: center; padding: 3rem; color: #9ca3af; }
+        .alert { padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.875rem; }
+        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .actions { display: flex; gap: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Insurance Management for {{ patient_name }} ({{ patient_mrn }})</h1>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0;">Insurance Policies</h2>
+                <button class="btn btn-primary" onclick="document.getElementById('add-form').style.display='block'">
+                    + Add Policy
+                </button>
+            </div>
+
+            <div id="add-form" style="display: none; margin-bottom: 1.5rem; padding: 1rem; border: 1px solid #e5e7eb; border-radius: 8px;">
+                <form hx-post="/api/v1/patients/{{ patient_id }}/insurance"
+                      hx-target="#policy-table"
+                      hx-swap="innerHTML"
+                      hx-on::after-request="document.getElementById('add-form').style.display='none'">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Provider</label>
+                            <select name="provider_id" required>
+                                <option value="">Select provider...</option>
+                                {% for p in providers %}
+                                <option value="{{ p.id }}">{{ p.name }} ({{ p.short_code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Policy Number</label>
+                            <input type="text" name="policy_number" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Policy Type</label>
+                            <select name="policy_type" required>
+                                <option value="primary">Primary</option>
+                                <option value="secondary">Secondary</option>
+                                <option value="dependent">Dependent</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Coverage Type</label>
+                            <select name="coverage_type" required>
+                                <option value="NHIS">NHIS</option>
+                                <option value="HMO">HMO</option>
+                                <option value="Private">Private</option>
+                                <option value="Corporate">Corporate</option>
+                                <option value="Military">Military</option>
+                                <option value="Tertiary">Tertiary</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Start Date</label>
+                            <input type="date" name="start_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>End Date</label>
+                            <input type="date" name="end_date">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Coverage Limit</label>
+                            <input type="number" name="coverage_limit" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Copay %</label>
+                            <input type="number" name="copay_percentage" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Coinsurance %</label>
+                            <input type="number" name="coinsurance_percentage" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea name="notes" rows="2"></textarea>
+                    </div>
+                    <div class="actions">
+                        <button type="submit" class="btn btn-primary">Create Policy</button>
+                        <button type="button" class="btn btn-sm" onclick="this.closest('#add-form').style.display='none'">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            {% if not policies %}
+            <div class="empty-state">
+                <p>No insurance policies recorded.</p>
+                <p style="font-size: 0.875rem; margin-top: 0.5rem;">Patient has no insurance — self-pay.</p>
+            </div>
+            {% else %}
+            <table id="policy-table">
+                <thead>
+                    <tr>
+                        <th>Provider</th>
+                        <th>Policy #</th>
+                        <th>Type</th>
+                        <th>Coverage</th>
+                        <th>Status</th>
+                        <th>Dates</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for policy in policies %}
+                    <tr>
+                        <td>{{ policy.provider.name if policy.provider else 'Unknown' }}</td>
+                        <td>{{ policy.policy_number }}</td>
+                        <td>{{ policy.policy_type }}</td>
+                        <td>{{ policy.coverage_type }}</td>
+                        <td><span class="badge badge-{{ policy.status }}">{{ policy.status }}</span></td>
+                        <td>{{ policy.start_date }} — {{ policy.end_date or 'N/A' }}</td>
+                        <td class="actions">
+                            {% if policy.status == 'pending' %}
+                            <button class="btn btn-success btn-sm"
+                                    hx-post="/api/v1/patients/{{ patient_id }}/insurance/{{ policy.id }}/transition"
+                                    hx-vals='{"new_status":"verified"}'
+                                    hx-target="closest tr">Verify</button>
+                            {% elif policy.status == 'verified' %}
+                            <button class="btn btn-success btn-sm"
+                                    hx-post="/api/v1/patients/{{ patient_id }}/insurance/{{ policy.id }}/transition"
+                                    hx-vals='{"new_status":"active"}'
+                                    hx-target="closest tr">Activate</button>
+                            {% elif policy.status == 'active' %}
+                            <button class="btn btn-warning btn-sm"
+                                    hx-post="/api/v1/patients/{{ patient_id }}/insurance/{{ policy.id }}/transition"
+                                    hx-vals='{"new_status":"expired"}'
+                                    hx-target="closest tr">Expire</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{# HTMX fragment: Visit timeline (skeleton for Phase 4/6) #}
+{# Usage: include with context { visits: list_of_visit_objects } #}
+<div class="timeline">
+    {% if visits %}
+        {% for visit in visits %}
+        <div class="timeline-entry">
+            <div class="date">{{ visit.date.strftime('%d %b %Y') if visit.date else '—' }}</div>
+            <div class="content">
+                <strong>{{ visit.department or 'General' }}</strong>
+                {% if visit.doctor_name %} — Dr. {{ visit.doctor_name }}{% endif %}
+                <br>
+                <span style="color:#6b7280;font-size:0.85rem">{{ visit.reason or visit.type or 'Consultation' }}</span>
+                {% if visit.status %}
+                <span class="badge badge-{{ visit.status }}">{{ visit.status|capitalize }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <p>No visits recorded yet.</p>
+        </div>
+    {% endif %}
+</div>

@@ -1,0 +1,20 @@
+{# HTMX fragment: Patient search result cards #}
+{% if patients %}
+    {% for patient in patients %}
+    <div class="patient-item" onclick="selectPatient('{{ patient.id }}')">
+        <div class="info">
+            <div class="name">{{ patient.first_name }} {{ patient.last_name }}</div>
+            <div class="meta">
+                <span>MRN: {{ patient.mrn }}</span>
+                <span>{{ patient.phone }}</span>
+                {% if patient.date_of_birth %}
+                <span>DOB: {{ patient.date_of_birth.strftime('%d %b %Y') }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <span class="badge badge-{{ patient.status }}">{{ patient.status|capitalize }}</span>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="empty-state">No patients found matching your search.</div>
+{% endif %}

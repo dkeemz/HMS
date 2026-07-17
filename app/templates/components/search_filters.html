@@ -1,0 +1,40 @@
+{# HTMX fragment: Advanced search filters panel #}
+<form id="filter-form" onsubmit="return false;">
+    <div class="filter-row">
+        <div class="form-group">
+            <label for="filter-status">Status</label>
+            <select id="filter-status" name="status">
+                <option value="">All statuses</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="deceased">Deceased</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="filter-gender">Gender</label>
+            <select id="filter-gender" name="gender">
+                <option value="">All genders</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="filter-state">State</label>
+            <input type="text" id="filter-state" name="address_state" placeholder="e.g. Lagos">
+        </div>
+    </div>
+    <div class="filter-row">
+        <div class="form-group">
+            <label for="filter-dob-from">DOB From</label>
+            <input type="date" id="filter-dob-from" name="dob_from">
+        </div>
+        <div class="form-group">
+            <label for="filter-dob-to">DOB To</label>
+            <input type="date" id="filter-dob-to" name="dob_to">
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end;gap:0.5rem">
+            <button type="button" class="btn btn-primary btn-sm" onclick="applyFilters()">Apply Filters</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="clearFilters()">Clear</button>
+        </div>
+    </div>
+</form>

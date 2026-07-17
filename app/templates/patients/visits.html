@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visit History</title>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-4xl mx-auto py-8 px-4">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Visit History</h1>
+        <p class="text-sm text-gray-500">{{ patient_name }} ({{ mrn }})</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="document.getElementById('walkin-form').classList.toggle('hidden')"
+                class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">
+          + New Walk-in
+        </button>
+        <button onclick="document.getElementById('scheduled-form').classList.toggle('hidden')"
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+          + Scheduled Visit
+        </button>
+      </div>
+    </div>
+
+    <!-- Walk-in form -->
+    <div id="walkin-form" class="hidden bg-white rounded-lg shadow p-6 mb-6">
+      <h3 class="text-lg font-semibold mb-4">New Walk-in Visit</h3>
+      <form hx-post="/api/v1/patients/{{ patient_id }}/visits/walkin"
+            hx-encoding="json"
+            hx-target="#visit-list"
+            hx-swap="afterbegin"
+            class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+          <select name="department_id" class="w-full border rounded-lg px-3 py-2">
+            <option value="">Select department</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Reason *</label>
+          <select name="reason" required class="w-full border rounded-lg px-3 py-2">
+            <option value="consultation">Consultation</option>
+            <option value="follow-up">Follow-up</option>
+            <option value="procedure">Procedure</option>
+            <option value="emergency">Emergency</option>
+            <option value="lab">Lab</option>
+            <option value="vaccination">Vaccination</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+          <textarea name="reason_notes" rows="2" class="w-full border rounded-lg px-3 py-2"
+                    placeholder="Additional details..."></textarea>
+        </div>
+        <input type="hidden" name="patient_id" value="{{ patient_id }}">
+        <div class="col-span-2 flex justify-end gap-2">
+          <button type="button" onclick="document.getElementById('walkin-form').classList.add('hidden')"
+                  class="px-4 py-2 border rounded-lg text-sm">Cancel</button>
+          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">
+            Create Walk-in
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Scheduled visit form -->
+    <div id="scheduled-form" class="hidden bg-white rounded-lg shadow p-6 mb-6">
+      <h3 class="text-lg font-semibold mb-4">Schedule Visit</h3>
+      <form hx-post="/api/v1/patients/{{ patient_id }}/visits"
+            hx-encoding="json"
+            hx-target="#visit-list"
+            hx-swap="afterbegin"
+            class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Scheduled At *</label>
+          <input type="datetime-local" name="scheduled_at" required class="w-full border rounded-lg px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Reason *</label>
+          <select name="reason" required class="w-full border rounded-lg px-3 py-2">
+            <option value="consultation">Consultation</option>
+            <option value="follow-up">Follow-up</option>
+            <option value="procedure">Procedure</option>
+            <option value="emergency">Emergency</option>
+            <option value="lab">Lab</option>
+            <option value="vaccination">Vaccination</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+          <textarea name="reason_notes" rows="2" class="w-full border rounded-lg px-3 py-2"
+                    placeholder="Additional details..."></textarea>
+        </div>
+        <input type="hidden" name="patient_id" value="{{ patient_id }}">
+        <div class="col-span-2 flex justify-end gap-2">
+          <button type="button" onclick="document.getElementById('scheduled-form').classList.add('hidden')"
+                  class="px-4 py-2 border rounded-lg text-sm">Cancel</button>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+            Schedule Visit
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Visit timeline -->
+    <div id="visit-list" class="space-y-4">
+      {% if visits %}
+        {% for visit in visits %}
+        <div class="bg-white rounded-lg shadow p-4 border-l-4
+          {% if visit.status == 'completed' %}border-green-500
+          {% elif visit.status == 'in-progress' %}border-orange-500
+          {% elif visit.status == 'checked-in' %}border-yellow-500
+          {% elif visit.status == 'scheduled' %}border-blue-500
+          {% else %}border-gray-400{% endif %}">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-gray-900">{{ visit.created_at.strftime('%b %d, %Y %I:%M %p') }}</span>
+                <span class="px-2 py-0.5 rounded-full text-xs font-medium
+                  {% if visit.status == 'completed' %}bg-green-100 text-green-800
+                  {% elif visit.status == 'in-progress' %}bg-orange-100 text-orange-800
+                  {% elif visit.status == 'checked-in' %}bg-yellow-100 text-yellow-800
+                  {% elif visit.status == 'scheduled' %}bg-blue-100 text-blue-800
+                  {% else %}bg-gray-100 text-gray-800{% endif %}">
+                  {{ visit.status }}
+                </span>
+              </div>
+              <p class="text-sm text-gray-600 mt-1">
+                <span class="font-medium">{{ visit.reason }}</span>
+                {% if visit.reason_notes %} — {{ visit.reason_notes }}{% endif %}
+              </p>
+              {% if visit.duration_minutes %}
+                <p class="text-xs text-gray-500 mt-1">Duration: {{ visit.duration_minutes }} min</p>
+              {% endif %}
+              {% if visit.cancellation_reason %}
+                <p class="text-xs text-red-500 mt-1">Cancellation reason: {{ visit.cancellation_reason }}</p>
+              {% endif %}
+            </div>
+            <div class="flex gap-1">
+              {% if visit.status == 'scheduled' %}
+                <button hx-post="/api/v1/patients/{{ patient_id }}/visits/{{ visit.id }}/transition"
+                        hx-vals='{"new_status":"checked-in"}'
+                        hx-target="closest div"
+                        class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded hover:bg-yellow-200">
+                  Check In
+                </button>
+              {% elif visit.status == 'checked-in' %}
+                <button hx-post="/api/v1/patients/{{ patient_id }}/visits/{{ visit.id }}/transition"
+                        hx-vals='{"new_status":"in-progress"}'
+                        hx-target="closest div"
+                        class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded hover:bg-orange-200">
+                  Start
+                </button>
+              {% elif visit.status == 'in-progress' %}
+                <button hx-post="/api/v1/patients/{{ patient_id }}/visits/{{ visit.id }}/transition"
+                        hx-vals='{"new_status":"completed"}'
+                        hx-target="closest div"
+                        class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded hover:bg-green-200">
+                  Complete
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center py-12 text-gray-500">
+          <p class="text-lg">No visits recorded yet</p>
+          <p class="text-sm mt-1">Create a walk-in or schedule a visit to get started</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

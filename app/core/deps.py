@@ -1,16 +1,20 @@
 from __future__ import annotations
 
+import logging
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, Request, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import decode_keycloak_token, get_current_user
 from app.models.role import Role
 from app.models.user import User
 from app.models.user_role import UserRole
+
+logger = logging.getLogger(__name__)
 
 
 async def get_current_active_user(
@@ -26,6 +30,51 @@ async def get_current_active_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_active_user)]
+
+
+async def get_current_user_from_cookie(
+    access_token: str | None = Cookie(None, alias="access_token"),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Authenticate from the ``access_token`` cookie (for HTML page routes).
+
+    Raises RedirectResponse to /auth/login if the cookie is missing or invalid.
+    """
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+            headers={"Location": "/auth/login"},
+        )
+    try:
+        payload = decode_keycloak_token(access_token)
+    except Exception:
+        logger.warning("Cookie token validation failed")
+        raise HTTPException(
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+            headers={"Location": "/auth/login"},
+        )
+
+    try:
+        user = await sync_user_from_cookie(db, payload)
+    except Exception:
+        logger.warning("User sync from cookie failed")
+        raise HTTPException(
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+            headers={"Location": "/auth/login"},
+        )
+
+    if user.status != "active":
+        raise HTTPException(
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+            headers={"Location": "/auth/login"},
+        )
+    return user
+
+
+async def sync_user_from_cookie(db: AsyncSession, payload: dict) -> User:
+    """Look up the HMS user from a decoded JWT payload."""
+    from app.core.security import sync_user_from_keycloak
+    return await sync_user_from_keycloak(db, payload)
 
 
 def require_role(role_name: str):

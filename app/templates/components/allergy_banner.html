@@ -1,0 +1,17 @@
+{# HTMX fragment: Allergy alert banner #}
+{# Usage: include with context { allergies: list_of_allergy_objects } #}
+{% if allergies %}
+<div class="allergy-banner" onclick="toggleAllergyBanner(this)">
+    <h3>⚠ {{ allergies|length }} Active Allerg{{ 'ies' if allergies|length > 1 else 'y' }}</h3>
+    <p>Click to view details</p>
+    <div class="allergy-details">
+        {% for allergy in allergies %}
+        <div class="allergy-item">
+            <strong>{{ allergy.name }}</strong>
+            <span class="badge badge-{{ allergy.severity }}">{{ allergy.severity|capitalize }}</span>
+            {% if allergy.reaction %}— {{ allergy.reaction }}{% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
