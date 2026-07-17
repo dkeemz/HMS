@@ -4,6 +4,7 @@ import logging
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import HTMLResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -176,6 +177,11 @@ async def login(
         samesite="strict",
         max_age=expires_in,
     )
+
+    if request.headers.get("HX-Request"):
+        resp = HTMLResponse("", status_code=200)
+        resp.headers["HX-Redirect"] = "/"
+        return resp
 
     return TokenResponse(
         access_token=access_token,
