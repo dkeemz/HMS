@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-07-13)
 
 **Core value:** One unified system that replaces all fragmented hospital tools — doctors must access complete patient records and manage appointments from a single place.
-**Current focus:** Phase 2 — Patient Management
+**Current focus:** Phase 3 — Doctor & Department Management
 
 ## Current Position
 
-Phase: 2 of 8 (Patient Management) — COMPLETE
-Plan: 6 of 6 in current phase — ALL COMPLETE
-Status: Phase 2 complete — ready for Phase 3 planning
-Last activity: 2026-07-16 — Phase 2 complete (all 6 plans), auth fix deployed, 77 tests passing
+Phase: 3 of 8 (Doctor & Department Management) — COMPLETE
+Plan: 4 of 4 in current phase — ALL COMPLETE
+Status: Phase 3 complete — ready for Phase 4 planning
+Last activity: 2026-07-17 — Phase 3 complete (4 plans), deployed to production, 12 departments seeded
 
-Progress: ███░░░░░░░ 25%
+Progress: ████░░░░░░ 37%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13 (Phase 1: 7, Phase 2: 6)
+- Total plans completed: 17 (Phase 1: 7, Phase 2: 6, Phase 3: 4)
 - Average duration: —
 - Total execution time: — hours
 
@@ -29,6 +29,7 @@ Progress: ███░░░░░░░ 25%
 |-------|-------|-------|----------|
 | 1. Foundation & Auth | 7 | 7 | — |
 | 2. Patient Management | 6 | 6 | — |
+| 3. Doctor & Department Mgmt | 4 | 4 | — |
 
 **Recent Trend:**
 - Last 5 plans: 02-01, 02-02, 02-03, 02-04, 02-05, 02-06
@@ -53,7 +54,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Begin Phase 3: Doctor & Department Management planning
+- Begin Phase 4: Appointment Scheduling & Visit Management planning
 
 ### Blockers/Concerns
 
@@ -71,6 +72,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-16
-Stopped at: Phase 2 complete, ready for Phase 3 planning
+Last session: 2026-07-17
+Stopped at: Phase 3 complete, ready for Phase 4 planning
 Resume file: .planning/ROADMAP.md
