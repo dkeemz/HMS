@@ -1,336 +1,323 @@
 {% extends "layouts/base.html" %}
+{% block title %}Appointments{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold">Appointments</h1>
+    <div class="flex gap-2">
+      <button onclick="document.getElementById('walkin-modal').classList.remove('hidden')" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700">+ Walk-in</button>
+      <button onclick="document.getElementById('book-modal').classList.remove('hidden')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">+ Book Appointment</button>
+    </div>
+  </div>
 
-{% block title %}Appointments — HMS{% endblock %}
+  <!-- Filters -->
+  <div class="bg-white rounded-lg shadow p-4 mb-6 flex gap-4 items-end">
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+      <select id="filter-status" onchange="filterAppointments()" class="border rounded-lg px-3 py-2">
+        <option value="">All Statuses</option>
+        <option value="scheduled" {{ 'selected' if status_filter == 'scheduled' }}>Scheduled</option>
+        <option value="confirmed" {{ 'selected' if status_filter == 'confirmed' }}>Confirmed</option>
+        <option value="checked-in" {{ 'selected' if status_filter == 'checked-in' }}>Checked In</option>
+        <option value="in-progress" {{ 'selected' if status_filter == 'in-progress' }}>In Progress</option>
+        <option value="completed" {{ 'selected' if status_filter == 'completed' }}>Completed</option>
+        <option value="cancelled" {{ 'selected' if status_filter == 'cancelled' }}>Cancelled</option>
+        <option value="no-show" {{ 'selected' if status_filter == 'no-show' }}>No Show</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+      <input type="date" id="filter-date" onchange="filterAppointments()" class="border rounded-lg px-3 py-2">
+    </div>
+    <button onclick="filterAppointments()" class="bg-gray-100 px-4 py-2 rounded-lg hover:bg-gray-200">Filter</button>
+  </div>
 
-{% block body %}
-<div class="flex min-h-screen">
-  {% set current_page = "appointments" %}
-  {% include "components/sidebar.html" %}
+  <!-- Stats -->
+  <div class="grid grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+      <div class="text-2xl font-bold text-blue-600">{{ total }}</div>
+      <div class="text-sm text-gray-500">Total</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+      <div class="text-2xl font-bold text-green-600">{{ appointments|selectattr('status', 'equalto', 'completed')|list|length }}</div>
+      <div class="text-sm text-gray-500">Completed</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+      <div class="text-2xl font-bold text-yellow-600">{{ appointments|selectattr('status', 'equalto', 'scheduled')|list|length }}</div>
+      <div class="text-sm text-gray-500">Scheduled</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+      <div class="text-2xl font-bold text-red-600">{{ appointments|selectattr('status', 'equalto', 'cancelled')|list|length }}</div>
+      <div class="text-sm text-gray-500">Cancelled</div>
+    </div>
+  </div>
 
-  <div class="flex-1 flex flex-col lg:ml-64 transition-all duration-250" id="main-layout-area">
-    {% include "components/header.html" %}
-
-    <main id="main-content" class="flex-1 p-4 lg:p-6 no-print" role="main" tabindex="-1">
-      <div class="max-w-7xl mx-auto">
-        {# Page header #}
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-          <div>
-            <h2 class="text-2xl font-bold text-hms-text">Appointments</h2>
-            <p class="text-sm text-hms-muted mt-1">Manage patient appointments and scheduling</p>
-          </div>
-          <button onclick="HMS.Modal.open('booking-modal')"
-                  class="inline-flex items-center gap-2 px-4 py-2 bg-hms-primary text-white rounded-lg hover:bg-hms-primary-dark transition-colors text-sm font-medium">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            New Appointment
-          </button>
-        </div>
-
-        {# Stats cards #}
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
-            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Today's Appointments</p>
-            <p class="text-2xl font-bold text-hms-text mt-1"
-               hx-get="/api/v1/appointments/stats?stat=today"
-               hx-trigger="load" hx-swap="innerHTML" hx-target="this">—</p>
-          </div>
-          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
-            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">This Week</p>
-            <p class="text-2xl font-bold text-blue-600 mt-1"
-               hx-get="/api/v1/appointments/stats?stat=week"
-               hx-trigger="load" hx-swap="innerHTML" hx-target="this">—</p>
-          </div>
-          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
-            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">Completed</p>
-            <p class="text-2xl font-bold text-green-600 mt-1"
-               hx-get="/api/v1/appointments/stats?stat=completed"
-               hx-trigger="load" hx-swap="innerHTML" hx-target="this">—</p>
-          </div>
-          <div class="bg-hms-surface rounded-lg border border-hms-border p-4">
-            <p class="text-xs font-medium text-hms-muted uppercase tracking-wider">No-Shows</p>
-            <p class="text-2xl font-bold text-red-600 mt-1"
-               hx-get="/api/v1/appointments/stats?stat=no_shows"
-               hx-trigger="load" hx-swap="innerHTML" hx-target="this">—</p>
-          </div>
-        </div>
-
-        {# Search and filters #}
-        <div class="bg-hms-surface border border-hms-border rounded-lg p-4 mb-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="lg:col-span-2">
-              <input type="text"
-                     id="search-appointments"
-                     placeholder="Search by patient or doctor..."
-                     class="w-full border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent"
-                     hx-get="/api/v1/appointments"
-                     hx-trigger="keyup changed delay:300ms"
-                     hx-include="#filter-date, #filter-status"
-                     hx-target="#appointments-table-body"
-                     hx-swap="innerHTML"
-                     name="search" />
-            </div>
-            <div>
-              <input type="date"
-                     id="filter-date"
-                     class="w-full border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent"
-                     hx-get="/api/v1/appointments"
-                     hx-trigger="change"
-                     hx-include="#search-appointments, #filter-status"
-                     hx-target="#appointments-table-body"
-                     hx-swap="innerHTML"
-                     name="date" />
-            </div>
-            <div>
-              <select id="filter-status"
-                      class="w-full border border-hms-border rounded-lg px-4 py-2 text-sm bg-hms-bg text-hms-text"
-                      hx-get="/api/v1/appointments"
-                      hx-trigger="change"
-                      hx-include="#search-appointments, #filter-date"
-                      hx-target="#appointments-table-body"
-                      hx-swap="innerHTML"
-                      name="status">
-                <option value="">All Statuses</option>
-                <option value="scheduled">Scheduled</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {# View toggle #}
-        <div class="flex justify-end mb-4">
-          <div class="inline-flex rounded-lg border border-hms-border overflow-hidden">
-            <button id="view-list" onclick="switchView('list')"
-                    class="px-4 py-2 text-sm font-medium bg-hms-primary text-white transition-colors">
-              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-              </svg>
-              List
-            </button>
-            <button id="view-calendar" onclick="switchView('calendar')"
-                    class="px-4 py-2 text-sm font-medium text-hms-text hover:bg-hms-bg transition-colors">
-              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-              Calendar
-            </button>
-          </div>
-        </div>
-
-        {# List view #}
-        <div id="list-view">
-          <div class="bg-hms-surface border border-hms-border rounded-lg overflow-hidden">
-            <table class="w-full text-sm">
-              <thead class="bg-hms-bg">
-                <tr>
-                  <th class="px-4 py-3 text-left font-medium text-hms-text">Patient</th>
-                  <th class="px-4 py-3 text-left font-medium text-hms-text">Doctor</th>
-                  <th class="px-4 py-3 text-left font-medium text-hms-text">Date & Time</th>
-                  <th class="px-4 py-3 text-left font-medium text-hms-text">Type</th>
-                  <th class="px-4 py-3 text-left font-medium text-hms-text">Status</th>
-                  <th class="px-4 py-3 text-right font-medium text-hms-text">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="appointments-table-body"
-                    hx-get="/api/v1/appointments"
-                    hx-trigger="load"
-                    hx-swap="innerHTML">
-                <tr>
-                  <td colspan="6" class="px-4 py-8 text-center text-hms-muted">
-                    <div class="flex items-center justify-center gap-3">
-                      <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                      </svg>
-                      Loading appointments...
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div id="appointments-pagination"></div>
-        </div>
-
-        {# Calendar view (hidden by default) #}
-        <div id="calendar-view" class="hidden">
-          <div class="bg-hms-surface border border-hms-border rounded-lg p-4">
-            <div class="flex items-center justify-between mb-4">
-              <button onclick="changeWeek(-1)" class="p-2 rounded-lg text-hms-muted hover:bg-hms-bg transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-              </button>
-              <h3 id="calendar-week-label" class="text-lg font-semibold text-hms-text"></h3>
-              <button onclick="changeWeek(1)" class="p-2 rounded-lg text-hms-muted hover:bg-hms-bg transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-              </button>
-            </div>
-            <div id="calendar-grid"
-                 class="grid grid-cols-7 gap-px bg-hms-border rounded-lg overflow-hidden"
-                 hx-get="/api/v1/appointments/calendar"
-                 hx-trigger="load"
-                 hx-swap="innerHTML">
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
+  <!-- Table -->
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Doctor</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {% for appt in appointments %}
+        <tr class="hover:bg-gray-50" id="appt-{{ appt.id }}">
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            <div class="font-medium">{{ appt.scheduled_at.strftime('%H:%M') }}</div>
+            <div class="text-gray-500 text-xs">{{ appt.scheduled_at.strftime('%d %b') }}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ appt.patient_id }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">{{ appt.doctor_id }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ appt.appointment_type }}</span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            {% set colors = {'scheduled': 'bg-yellow-100 text-yellow-800', 'confirmed': 'bg-blue-100 text-blue-800', 'checked-in': 'bg-green-100 text-green-800', 'in-progress': 'bg-purple-100 text-purple-800', 'completed': 'bg-gray-100 text-gray-800', 'cancelled': 'bg-red-100 text-red-800', 'no-show': 'bg-red-100 text-red-800'} %}
+            <span class="px-2 py-1 text-xs rounded-full {{ colors.get(appt.status, 'bg-gray-100') }}">{{ appt.status }}</span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            {% if appt.priority == 'urgent' %}
+            <span class="text-red-600 font-bold">Urgent</span>
+            {% elif appt.priority == 'high' %}
+            <span class="text-orange-600">High</span>
+            {% else %}
+            <span class="text-gray-600">{{ appt.priority|capitalize }}</span>
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm space-x-1">
+            {% if appt.status == 'scheduled' or appt.status == 'confirmed' %}
+            <button onclick="transitionAppointment('{{ appt.id }}', 'checked-in')" class="text-green-600 hover:text-green-800 text-xs">Check In</button>
+            {% endif %}
+            {% if appt.status == 'checked-in' %}
+            <button onclick="transitionAppointment('{{ appt.id }}', 'in-progress')" class="text-purple-600 hover:text-purple-800 text-xs">Start</button>
+            {% endif %}
+            {% if appt.status == 'in-progress' %}
+            <button onclick="transitionAppointment('{{ appt.id }}', 'completed')" class="text-blue-600 hover:text-blue-800 text-xs">Complete</button>
+            {% endif %}
+            {% if appt.status not in ('completed', 'cancelled') %}
+            <button onclick="openReschedule('{{ appt.id }}')" class="text-yellow-600 hover:text-yellow-800 text-xs">Reschedule</button>
+            <button onclick="cancelAppointment('{{ appt.id }}')" class="text-red-600 hover:text-red-800 text-xs">Cancel</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not appointments %}
+        <tr><td colspan="7" class="px-6 py-12 text-center text-gray-500">No appointments found</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
   </div>
 </div>
 
-{# Booking Modal #}
-<div id="booking-modal"
-     class="fixed inset-0 bg-black/50 flex items-center justify-center hidden z-50"
-     role="dialog" aria-modal="true" aria-labelledby="booking-modal-title"
-     onclick="if(event.target===this) HMS.Modal.close('booking-modal')">
-  <div class="bg-hms-surface rounded-lg shadow-xl p-6 w-full max-w-lg border border-hms-border"
-       onclick="event.stopPropagation()">
-    <div class="flex items-center justify-between mb-4">
-      <h3 id="booking-modal-title" class="text-lg font-semibold text-hms-text">New Appointment</h3>
-      <button onclick="HMS.Modal.close('booking-modal')"
-              class="p-1 rounded-lg text-hms-muted hover:bg-hms-bg hover:text-hms-text"
-              aria-label="Close modal">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
-    </div>
-
-    <form hx-post="/api/v1/appointments"
-          hx-target="#appointments-table-body"
-          hx-swap="innerHTML"
-          hx-on::after-request="if(event.detail.successful) { this.reset(); HMS.Modal.close('booking-modal'); htmx.trigger('#appointments-table-body', 'load'); }">
+<!-- Book Appointment Modal -->
+<div id="book-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+    <h2 class="text-xl font-bold mb-4">Book Appointment</h2>
+    <form id="book-form" onsubmit="bookAppointment(event)">
       <div class="space-y-4">
         <div>
-          <label for="booking-patient" class="block text-sm font-medium text-hms-text mb-1">Patient</label>
-          <select id="booking-patient" name="patient_id" required
-                  class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
-            <option value="">Select patient</option>
+          <label class="block text-sm font-medium text-gray-700">Patient ID</label>
+          <input type="text" name="patient_id" required class="w-full border rounded-lg px-3 py-2 mt-1">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Doctor ID</label>
+          <input type="text" name="doctor_id" required class="w-full border rounded-lg px-3 py-2 mt-1">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Date & Time</label>
+          <input type="datetime-local" name="scheduled_at" required class="w-full border rounded-lg px-3 py-2 mt-1">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Type</label>
+          <select name="appointment_type" class="w-full border rounded-lg px-3 py-2 mt-1">
+            {% for t, dur in appointment_types.items() %}
+            <option value="{{ t }}">{{ t|capitalize }} ({{ dur }}min)</option>
+            {% endfor %}
           </select>
         </div>
         <div>
-          <label for="booking-doctor" class="block text-sm font-medium text-hms-text mb-1">Doctor</label>
-          <select id="booking-doctor" name="doctor_id" required
-                  class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
-            <option value="">Select doctor</option>
-          </select>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label for="booking-date" class="block text-sm font-medium text-hms-text mb-1">Date</label>
-            <input type="date" id="booking-date" name="date" required
-                   class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
-          </div>
-          <div>
-            <label for="booking-time" class="block text-sm font-medium text-hms-text mb-1">Time</label>
-            <input type="time" id="booking-time" name="time" required
-                   class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent" />
-          </div>
-        </div>
-        <div>
-          <label for="booking-type" class="block text-sm font-medium text-hms-text mb-1">Appointment Type</label>
-          <select id="booking-type" name="type" required
-                  class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent">
-            <option value="">Select type</option>
-            <option value="consultation">Consultation</option>
-            <option value="follow_up">Follow-up</option>
-            <option value="emergency">Emergency</option>
-            <option value="routine_checkup">Routine Checkup</option>
-            <option value="procedure">Procedure</option>
-          </select>
-        </div>
-        <div>
-          <label for="booking-notes" class="block text-sm font-medium text-hms-text mb-1">Notes</label>
-          <textarea id="booking-notes" name="notes" rows="3"
-                    class="w-full border border-hms-border rounded-lg px-3 py-2 text-sm bg-hms-bg text-hms-text focus:ring-2 focus:ring-hms-primary focus:border-transparent"
-                    placeholder="Optional notes..."></textarea>
+          <label class="block text-sm font-medium text-gray-700">Notes</label>
+          <textarea name="notes" rows="2" class="w-full border rounded-lg px-3 py-2 mt-1"></textarea>
         </div>
       </div>
-      <div class="flex gap-3 justify-end mt-6">
-        <button type="button" onclick="HMS.Modal.close('booking-modal')"
-                class="px-4 py-2 border border-hms-border rounded-lg text-sm hover:bg-hms-bg text-hms-text transition-colors">
-          Cancel
-        </button>
-        <button type="submit"
-                class="px-4 py-2 bg-hms-primary text-white rounded-lg text-sm hover:bg-hms-primary-dark transition-colors">
-          Book Appointment
-        </button>
+      <div id="book-result" class="mt-4 hidden"></div>
+      <div class="flex gap-2 mt-4">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Book</button>
+        <button type="button" onclick="document.getElementById('book-modal').classList.add('hidden')" class="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Walk-in Modal -->
+<div id="walkin-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+    <h2 class="text-xl font-bold mb-4">Register Walk-in</h2>
+    <form id="walkin-form" onsubmit="registerWalkin(event)">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Patient ID</label>
+          <input type="text" name="patient_id" required class="w-full border rounded-lg px-3 py-2 mt-1">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Department</label>
+          <select name="department_id" class="w-full border rounded-lg px-3 py-2 mt-1">
+            <option value="">Select department</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Priority</label>
+          <select name="priority" class="w-full border rounded-lg px-3 py-2 mt-1">
+            <option value="normal">Normal</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Notes</label>
+          <textarea name="notes" rows="2" class="w-full border rounded-lg px-3 py-2 mt-1"></textarea>
+        </div>
+      </div>
+      <div id="walkin-result" class="mt-4 hidden"></div>
+      <div class="flex gap-2 mt-4">
+        <button type="submit" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700">Register Walk-in</button>
+        <button type="button" onclick="document.getElementById('walkin-modal').classList.add('hidden')" class="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Reschedule Modal -->
+<div id="reschedule-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+    <h2 class="text-xl font-bold mb-4">Reschedule Appointment</h2>
+    <form id="reschedule-form" onsubmit="rescheduleAppointment(event)">
+      <input type="hidden" id="reschedule-id">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">New Date & Time</label>
+          <input type="datetime-local" id="reschedule-datetime" required class="w-full border rounded-lg px-3 py-2 mt-1">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Reason</label>
+          <input type="text" id="reschedule-reason" class="w-full border rounded-lg px-3 py-2 mt-1">
+        </div>
+      </div>
+      <div id="reschedule-result" class="mt-4 hidden"></div>
+      <div class="flex gap-2 mt-4">
+        <button type="submit" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700">Reschedule</button>
+        <button type="button" onclick="document.getElementById('reschedule-modal').classList.add('hidden')" class="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300">Cancel</button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-// View toggle
-function switchView(view) {
-  var listView = document.getElementById('list-view');
-  var calView = document.getElementById('calendar-view');
-  var listBtn = document.getElementById('view-list');
-  var calBtn = document.getElementById('view-calendar');
-  if (view === 'list') {
-    listView.classList.remove('hidden');
-    calView.classList.add('hidden');
-    listBtn.className = 'px-4 py-2 text-sm font-medium bg-hms-primary text-white transition-colors';
-    calBtn.className = 'px-4 py-2 text-sm font-medium text-hms-text hover:bg-hms-bg transition-colors';
-  } else {
-    listView.classList.add('hidden');
-    calView.classList.remove('hidden');
-    calBtn.className = 'px-4 py-2 text-sm font-medium bg-hms-primary text-white transition-colors';
-    listBtn.className = 'px-4 py-2 text-sm font-medium text-hms-text hover:bg-hms-bg transition-colors';
-    htmx.trigger('#calendar-grid', 'load');
-  }
+function filterAppointments() {
+  const status = document.getElementById('filter-status').value;
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  htmx.ajax('GET', '/appointments/page/list?' + params.toString(), {target: '#content'});
 }
 
-// Calendar week navigation
-var currentWeekOffset = 0;
-function changeWeek(dir) {
-  currentWeekOffset += dir;
-  htmx.trigger('#calendar-grid', 'load');
-}
-
-// Modal management
-HMS.Modal = {
-  open: function(id) {
-    document.getElementById(id).classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  },
-  close: function(id) {
-    document.getElementById(id).classList.add('hidden');
-    document.body.style.overflow = '';
-  }
-};
-
-// Close modal on Escape key
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('[role="dialog"]:not(.hidden)').forEach(function(modal) {
-      modal.classList.add('hidden');
-    });
-    document.body.style.overflow = '';
-  }
-});
-
-// Sidebar margin adjustment
-(function(){
-  var sidebar = document.getElementById('app-sidebar');
-  var mainArea = document.getElementById('main-layout-area');
-  if(!sidebar || !mainArea) return;
-  var obs = new MutationObserver(function(){
-    if(window.innerWidth >= 1024){
-      mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
-    } else {
-      mainArea.style.marginLeft = '0';
-    }
+function bookAppointment(e) {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const data = {
+    patient_id: form.get('patient_id'),
+    doctor_id: form.get('doctor_id'),
+    scheduled_at: new Date(form.get('scheduled_at')).toISOString(),
+    appointment_type: form.get('appointment_type'),
+    notes: form.get('notes'),
+  };
+  fetch('/api/v1/appointments/', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data),
+  }).then(r => r.json()).then(d => {
+    const el = document.getElementById('book-result');
+    el.classList.remove('hidden');
+    el.innerHTML = d.id
+      ? '<div class="text-green-600">Appointment booked!</div>'
+      : `<div class="text-red-600">${d.detail || 'Error'}</div>`;
+    if (d.id) setTimeout(() => location.reload(), 1000);
   });
-  obs.observe(sidebar, {attributes:true, attributeFilter:['class']});
-  if(window.innerWidth >= 1024){
-    mainArea.style.marginLeft = sidebar.classList.contains('collapsed') ? '64px' : '256px';
-  }
-})();
+}
+
+function registerWalkin(e) {
+  e.preventDefault();
+  const form = new FormData(e.target);
+  const data = {
+    patient_id: form.get('patient_id'),
+    department_id: form.get('department_id') || null,
+    priority: form.get('priority'),
+    notes: form.get('notes'),
+  };
+  fetch('/api/v1/appointments/walk-in', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data),
+  }).then(r => r.json()).then(d => {
+    const el = document.getElementById('walkin-result');
+    el.classList.remove('hidden');
+    el.innerHTML = d.queue_position
+      ? `<div class="text-green-600">${d.message}</div>`
+      : `<div class="text-red-600">${d.detail || 'Error'}</div>`;
+    if (d.queue_position) setTimeout(() => location.reload(), 1000);
+  });
+}
+
+function transitionAppointment(id, newStatus) {
+  fetch(`/api/v1/appointments/${id}/${newStatus === 'checked-in' ? 'check-in' : newStatus === 'in-progress' ? 'start' : 'complete'}`, {
+    method: 'POST',
+  }).then(r => r.json()).then(d => {
+    if (d.status) location.reload();
+    else alert(d.detail || 'Error');
+  });
+}
+
+function openReschedule(id) {
+  document.getElementById('reschedule-id').value = id;
+  document.getElementById('reschedule-modal').classList.remove('hidden');
+}
+
+function rescheduleAppointment(e) {
+  e.preventDefault();
+  const id = document.getElementById('reschedule-id').value;
+  fetch(`/api/v1/appointments/${id}/reschedule`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      new_scheduled_at: new Date(document.getElementById('reschedule-datetime').value).toISOString(),
+      reason: document.getElementById('reschedule-reason').value,
+    }),
+  }).then(r => r.json()).then(d => {
+    const el = document.getElementById('reschedule-result');
+    el.classList.remove('hidden');
+    el.innerHTML = d.id
+      ? '<div class="text-green-600">Rescheduled!</div>'
+      : `<div class="text-red-600">${d.detail || 'Error'}</div>`;
+    if (d.id) setTimeout(() => location.reload(), 1000);
+  });
+}
+
+function cancelAppointment(id) {
+  if (!confirm('Cancel this appointment?')) return;
+  fetch(`/api/v1/appointments/${id}/cancel`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({reason: 'Cancelled by user'}),
+  }).then(r => r.json()).then(d => {
+    if (d.status) location.reload();
+    else alert(d.detail || 'Error');
+  });
+}
 </script>
 {% endblock %}

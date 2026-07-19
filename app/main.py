@@ -147,6 +147,11 @@ async def appointments_page(request: Request, user: User = Depends(get_current_u
     return templates.TemplateResponse(request, "appointments/list.html", _user_ctx(user))
 
 
+@app.get("/appointments/queue")
+async def queue_page(request: Request, user: User = Depends(get_current_user_from_cookie)):
+    return templates.TemplateResponse(request, "appointments/queue.html", _user_ctx(user))
+
+
 @app.get("/doctors")
 async def doctors_list(request: Request, user: User = Depends(get_current_user_from_cookie)):
     return templates.TemplateResponse(request, "doctors/list.html", _user_ctx(user))

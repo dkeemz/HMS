@@ -81,6 +81,10 @@ PERMISSION_SPECS: list[PermSpec] = [
     PermSpec("department", "delete", "Delete departments"),
     PermSpec("doctor", "read", "View doctor profiles"),
     PermSpec("doctor", "update", "Edit doctor profiles"),
+    PermSpec("appointment", "create", "Create appointments"),
+    PermSpec("appointment", "read", "View appointments"),
+    PermSpec("appointment", "update", "Edit/update appointments"),
+    PermSpec("appointment", "delete", "Cancel appointments"),
 ]
 
 
@@ -145,6 +149,10 @@ ROLES: dict[str, dict] = {
             "department:delete",
             "doctor:read",
             "doctor:update",
+            "appointment:create",
+            "appointment:read",
+            "appointment:update",
+            "appointment:delete",
         ],
     },
     "Dept Head": {

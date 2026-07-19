@@ -1,5 +1,7 @@
 from fastapi import APIRouter
 
+from app.api.v1.appointments import router as appointments_router
+from app.api.v1.availability import router as availability_router
 from app.api.v1.audit import router as audit_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.break_glass import router as break_glass_router
@@ -27,6 +29,8 @@ router.include_router(auth_router)
 router.include_router(password_router)
 router.include_router(rbac_router)
 router.include_router(audit_router)
+router.include_router(appointments_router)
+router.include_router(availability_router)
 router.include_router(break_glass_router)
 router.include_router(dashboard_router)
 router.include_router(departments_router)

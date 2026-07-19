@@ -1,4 +1,5 @@
 from app.models.account_lockout import AccountLockout
+from app.models.appointment import Appointment
 from app.models.allergy import Allergy
 from app.models.audit_log import AuditLog
 from app.models.break_glass import BreakGlassAccess
@@ -34,6 +35,7 @@ from app.models.visit_summary import VisitSummary
 __all__ = [
     "AccountLockout",
     "Allergy",
+    "Appointment",
     "AuditLog",
     "BreakGlassAccess",
     "BreakGlassAudit",

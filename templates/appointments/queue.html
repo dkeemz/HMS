@@ -1,0 +1,91 @@
+{% extends "layouts/base.html" %}
+{% block title %}Queue Management{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold">Walk-in Queue</h1>
+    <a href="/appointments" class="text-blue-600 hover:underline">&larr; Back to Appointments</a>
+  </div>
+
+  <!-- Queue Stats -->
+  <div class="grid grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+      <div class="text-2xl font-bold text-blue-600">{{ queue|length }}</div>
+      <div class="text-sm text-gray-500">In Queue</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+      <div class="text-2xl font-bold text-purple-600">{{ queue|selectattr('status', 'equalto', 'in-progress')|list|length }}</div>
+      <div class="text-sm text-gray-500">In Progress</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+      <div class="text-2xl font-bold text-green-600">{{ queue|selectattr('priority', 'equalto', 'urgent')|list|length }}</div>
+      <div class="text-sm text-gray-500">Urgent</div>
+    </div>
+    <div class="bg-white rounded-lg shadow p-4 text-center">
+      <div class="text-2xl font-bold text-orange-600">{{ queue|selectattr('priority', 'equalto', 'high')|list|length }}</div>
+      <div class="text-sm text-gray-500">High Priority</div>
+    </div>
+  </div>
+
+  <!-- Queue Table -->
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Position</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Arrived</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {% for appt in queue %}
+        <tr class="hover:bg-gray-50 {{ 'bg-red-50' if appt.priority == 'urgent' }} {{ 'bg-orange-50' if appt.priority == 'high' }}">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="text-2xl font-bold {{ 'text-red-600' if appt.priority == 'urgent' else 'text-gray-900' }}">#{{ appt.queue_position }}</span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ appt.patient_id }}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ appt.appointment_type }}</span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            {% set pcolors = {'urgent': 'bg-red-100 text-red-800', 'high': 'bg-orange-100 text-orange-800', 'normal': 'bg-gray-100 text-gray-800', 'low': 'bg-green-100 text-green-800'} %}
+            <span class="px-2 py-1 text-xs rounded-full {{ pcolors.get(appt.priority, 'bg-gray-100') }}">{{ appt.priority }}</span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm">
+            {% set scolors = {'checked-in': 'bg-green-100 text-green-800', 'in-progress': 'bg-purple-100 text-purple-800'} %}
+            <span class="px-2 py-1 text-xs rounded-full {{ scolors.get(appt.status, 'bg-gray-100') }}">{{ appt.status }}</span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ appt.checked_in_at.strftime('%H:%M') if appt.checked_in_at else '—' }}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm space-x-1">
+            {% if appt.status == 'checked-in' %}
+            <button onclick="transitionAppointment('{{ appt.id }}', 'in-progress')" class="text-purple-600 hover:text-purple-800 text-xs font-medium">Start</button>
+            {% endif %}
+            {% if appt.status == 'in-progress' %}
+            <button onclick="transitionAppointment('{{ appt.id }}', 'completed')" class="text-green-600 hover:text-green-800 text-xs font-medium">Complete</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not queue %}
+        <tr><td colspan="7" class="px-6 py-12 text-center text-gray-500">No patients in queue</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function transitionAppointment(id, newStatus) {
+  const endpoint = newStatus === 'in-progress' ? 'start' : 'complete';
+  fetch(`/api/v1/appointments/${id}/${endpoint}`, { method: 'POST' })
+    .then(r => r.json())
+    .then(d => { if (d.status) location.reload(); else alert(d.detail || 'Error'); });
+}
+</script>
+{% endblock %}
