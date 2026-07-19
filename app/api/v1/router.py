@@ -8,6 +8,7 @@ from app.api.v1.break_glass import router as break_glass_router
 from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.departments import router as departments_router
 from app.api.v1.doctors import router as doctors_router
+from app.api.v1.ehr import router as ehr_router
 from app.api.v1.insurance import providers_router, router as insurance_router
 from app.api.v1.medical_history import router as medical_history_router
 from app.api.v1.notifications import router as notifications_router
@@ -35,6 +36,7 @@ router.include_router(break_glass_router)
 router.include_router(dashboard_router)
 router.include_router(departments_router)
 router.include_router(doctors_router)
+router.include_router(ehr_router)
 router.include_router(notifications_router)
 router.include_router(patient_search_router)
 router.include_router(patients_router)

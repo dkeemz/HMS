@@ -172,3 +172,28 @@ async def departments_list(request: Request, user: User = Depends(get_current_us
 @app.get("/records")
 async def records_page(request: Request, user: User = Depends(get_current_user_from_cookie)):
     return templates.TemplateResponse(request, "records/list.html", _user_ctx(user))
+
+
+@app.get("/ehr/notes")
+async def ehr_notes_page(request: Request, user: User = Depends(get_current_user_from_cookie)):
+    return templates.TemplateResponse(request, "ehr/notes.html", _user_ctx(user))
+
+
+@app.get("/ehr/vitals")
+async def ehr_vitals_page(request: Request, user: User = Depends(get_current_user_from_cookie)):
+    return templates.TemplateResponse(request, "ehr/vitals.html", _user_ctx(user))
+
+
+@app.get("/ehr/diagnoses")
+async def ehr_diagnoses_page(request: Request, user: User = Depends(get_current_user_from_cookie)):
+    return templates.TemplateResponse(request, "ehr/diagnoses.html", _user_ctx(user))
+
+
+@app.get("/ehr/labs")
+async def ehr_labs_page(request: Request, user: User = Depends(get_current_user_from_cookie)):
+    return templates.TemplateResponse(request, "ehr/labs.html", _user_ctx(user))
+
+
+@app.get("/ehr/documents")
+async def ehr_documents_page(request: Request, user: User = Depends(get_current_user_from_cookie)):
+    return templates.TemplateResponse(request, "ehr/documents.html", _user_ctx(user))

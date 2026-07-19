@@ -86,3 +86,18 @@ class Visit(Base):
     summary: Mapped[VisitSummary | None] = sa_relationship(
         back_populates="visit", uselist=False,
     )
+    notes: Mapped[list] = sa_relationship(
+        back_populates="visit", foreign_keys="[EhrNote.visit_id]",
+    )
+    vitals: Mapped[list] = sa_relationship(
+        back_populates="visit", foreign_keys="[VitalSign.visit_id]",
+    )
+    diagnoses: Mapped[list] = sa_relationship(
+        back_populates="visit", foreign_keys="[Diagnosis.visit_id]",
+    )
+    lab_results: Mapped[list] = sa_relationship(
+        back_populates="visit", foreign_keys="[LabResult.visit_id]",
+    )
+    documents: Mapped[list] = sa_relationship(
+        back_populates="visit", foreign_keys="[ClinicalDocument.visit_id]",
+    )

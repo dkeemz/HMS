@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnoses — HMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body class="h-full bg-gray-50">
+<div class="flex h-full">
+    {% include "components/sidebar.html" %}
+    <main class="flex-1 overflow-auto">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Diagnoses</h1>
+                    <p class="text-gray-500 mt-1">ICD-coded diagnoses for patient encounters</p>
+                </div>
+                <button onclick="document.getElementById('createModal').classList.remove('hidden')"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    + New Diagnosis
+                </button>
+            </div>
+
+            <!-- Filter -->
+            <div class="bg-white rounded-lg shadow mb-6 p-4">
+                <div class="flex gap-4 items-center">
+                    <input type="text" id="filterPatient" placeholder="Patient ID..." class="border rounded-lg px-3 py-2 text-sm flex-1">
+                    <input type="text" id="filterVisit" placeholder="Visit ID (optional)..." class="border rounded-lg px-3 py-2 text-sm flex-1">
+                    <button onclick="loadDiagnoses()" class="bg-gray-100 px-4 py-2 rounded-lg text-sm hover:bg-gray-200">Search</button>
+                </div>
+            </div>
+
+            <!-- Diagnoses Table -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ICD Code</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200" id="diagnosesTable">
+                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Enter a patient ID to view diagnoses</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
+        <h2 class="text-lg font-bold mb-4">New Diagnosis</h2>
+        <form id="diagForm" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Patient ID</label>
+                    <input type="text" name="patient_id" required class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Visit ID</label>
+                    <input type="text" name="visit_id" required class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">ICD Code</label>
+                    <input type="text" name="icd_code" required class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm" placeholder="e.g. A09">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">ICD Version</label>
+                    <input type="text" name="icd_version" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm" value="ICD-10">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Description</label>
+                <input type="text" name="description" required class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm" placeholder="Infectious gastroenteritis">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Type</label>
+                    <select name="diagnosis_type" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                        <option value="primary">Primary</option>
+                        <option value="secondary">Secondary</option>
+                        <option value="differential">Differential</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Status</label>
+                    <select name="status" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                        <option value="active">Active</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="ruled_out">Ruled Out</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Notes</label>
+                <textarea name="notes" rows="2" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm" placeholder="Additional notes..."></textarea>
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t">
+                <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+async function loadDiagnoses() {
+    const patientId = document.getElementById('filterPatient').value;
+    if (!patientId) return;
+    const r = await fetch(`/api/v1/ehr/diagnoses/patient/${patientId}`);
+    if (!r.ok) { alert('Error loading diagnoses'); return; }
+    const data = await r.json();
+    const tbody = document.getElementById('diagnosesTable');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No diagnoses found</td></tr>'; return; }
+    const typeColors = { primary: 'bg-blue-100 text-blue-800', secondary: 'bg-gray-100 text-gray-800', differential: 'bg-yellow-100 text-yellow-800' };
+    const statusColors = { active: 'bg-green-100 text-green-800', resolved: 'bg-gray-100 text-gray-800', ruled_out: 'bg-red-100 text-red-800' };
+    tbody.innerHTML = data.map(d => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2 text-sm">${new Date(d.created_at).toLocaleDateString()}</td>
+            <td class="px-4 py-2 text-sm font-mono font-medium">${d.icd_code}</td>
+            <td class="px-4 py-2 text-sm">${d.description}</td>
+            <td class="px-4 py-2 text-sm"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[d.diagnosis_type] || ''}">${d.diagnosis_type}</span></td>
+            <td class="px-4 py-2 text-sm"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[d.status] || ''}">${d.status}</span></td>
+            <td class="px-4 py-2 text-sm"><button class="text-red-500 hover:underline text-xs" onclick="deleteDiag('${d.id}')">Delete</button></td>
+        </tr>
+    `).join('');
+}
+async function deleteDiag(id) {
+    if (!confirm('Delete this diagnosis?')) return;
+    const r = await fetch(`/api/v1/ehr/diagnoses/${id}`, { method: 'DELETE' });
+    if (r.ok) loadDiagnoses();
+}
+document.getElementById('diagForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = { patient_id: fd.get('patient_id'), visit_id: fd.get('visit_id'), icd_code: fd.get('icd_code'), description: fd.get('description'), diagnosis_type: fd.get('diagnosis_type'), status: fd.get('status') };
+    if (fd.get('icd_version')) data.icd_version = fd.get('icd_version');
+    if (fd.get('notes')) data.notes = fd.get('notes');
+    const r = await fetch('/api/v1/ehr/diagnoses', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+    if (r.ok) { document.getElementById('createModal').classList.add('hidden'); e.target.reset(); loadDiagnoses(); }
+    else { const err = await r.json(); alert(err.detail || 'Error'); }
+});
+</script>
+</body>
+</html>

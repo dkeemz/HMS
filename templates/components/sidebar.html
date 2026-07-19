@@ -100,6 +100,70 @@
       <span class="nav-label">Doctors</span>
     </a>
 
+    {# EHR section label #}
+    <div class="border-t border-hms-border my-3"></div>
+    <p class="nav-label px-3 text-xs font-semibold text-hms-muted uppercase tracking-wider mb-2">Clinical (EHR)</p>
+
+    {# EHR: Notes #}
+    <a href="/ehr/notes"
+       class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+              {% if current_page == 'ehr-notes' %}bg-hms-primary/10 text-hms-primary{% else %}text-hms-muted hover:bg-hms-bg hover:text-hms-text{% endif %}"
+       aria-current="{% if current_page == 'ehr-notes' %}page{% endif %}"
+       tabindex="0">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+      </svg>
+      <span class="nav-label">SOAP Notes</span>
+    </a>
+
+    {# EHR: Vitals #}
+    <a href="/ehr/vitals"
+       class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+              {% if current_page == 'ehr-vitals' %}bg-hms-primary/10 text-hms-primary{% else %}text-hms-muted hover:bg-hms-bg hover:text-hms-text{% endif %}"
+       aria-current="{% if current_page == 'ehr-vitals' %}page{% endif %}"
+       tabindex="0">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+      </svg>
+      <span class="nav-label">Vital Signs</span>
+    </a>
+
+    {# EHR: Diagnoses #}
+    <a href="/ehr/diagnoses"
+       class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+              {% if current_page == 'ehr-diagnoses' %}bg-hms-primary/10 text-hms-primary{% else %}text-hms-muted hover:bg-hms-bg hover:text-hms-text{% endif %}"
+       aria-current="{% if current_page == 'ehr-diagnoses' %}page{% endif %}"
+       tabindex="0">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+      <span class="nav-label">Diagnoses</span>
+    </a>
+
+    {# EHR: Lab Results #}
+    <a href="/ehr/labs"
+       class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+              {% if current_page == 'ehr-labs' %}bg-hms-primary/10 text-hms-primary{% else %}text-hms-muted hover:bg-hms-bg hover:text-hms-text{% endif %}"
+       aria-current="{% if current_page == 'ehr-labs' %}page{% endif %}"
+       tabindex="0">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+      </svg>
+      <span class="nav-label">Lab Results</span>
+    </a>
+
+    {# EHR: Documents #}
+    <a href="/ehr/documents"
+       class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+              {% if current_page == 'ehr-documents' %}bg-hms-primary/10 text-hms-primary{% else %}text-hms-muted hover:bg-hms-bg hover:text-hms-text{% endif %}"
+       aria-current="{% if current_page == 'ehr-documents' %}page{% endif %}"
+       tabindex="0">
+      <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+      </svg>
+      <span class="nav-label">Documents</span>
+    </a>
+
     {# Divider #}
     <div class="border-t border-hms-border my-3"></div>
 

@@ -78,6 +78,21 @@ class Patient(Base):
     family_history: Mapped[list[FamilyHistory]] = sa_relationship(
         back_populates="patient", foreign_keys="[FamilyHistory.patient_id]",
     )
+    ehr_notes: Mapped[list] = sa_relationship(
+        back_populates="patient", foreign_keys="[EhrNote.patient_id]",
+    )
+    vital_signs: Mapped[list] = sa_relationship(
+        back_populates="patient", foreign_keys="[VitalSign.patient_id]",
+    )
+    diagnoses: Mapped[list] = sa_relationship(
+        back_populates="patient", foreign_keys="[Diagnosis.patient_id]",
+    )
+    lab_results: Mapped[list] = sa_relationship(
+        back_populates="patient", foreign_keys="[LabResult.patient_id]",
+    )
+    clinical_documents: Mapped[list] = sa_relationship(
+        back_populates="patient", foreign_keys="[ClinicalDocument.patient_id]",
+    )
 
 
 class EmergencyContact(Base):

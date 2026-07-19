@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Results — HMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body class="h-full bg-gray-50">
+<div class="flex h-full">
+    {% include "components/sidebar.html" %}
+    <main class="flex-1 overflow-auto">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Lab Results</h1>
+                    <p class="text-gray-500 mt-1">Order and review laboratory test results</p>
+                </div>
+                <button onclick="document.getElementById('createModal').classList.remove('hidden')"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    + Order Lab Test
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white rounded-lg shadow p-4"><div class="text-sm text-gray-500">Total Orders</div><div class="text-2xl font-bold" id="stat-total">—</div></div>
+                <div class="bg-white rounded-lg shadow p-4"><div class="text-sm text-gray-500">Pending</div><div class="text-2xl font-bold text-yellow-600" id="stat-ordered">—</div></div>
+                <div class="bg-white rounded-lg shadow p-4"><div class="text-sm text-gray-500">Completed</div><div class="text-2xl font-bold text-green-600" id="stat-completed">—</div></div>
+                <div class="bg-white rounded-lg shadow p-4"><div class="text-sm text-gray-500">Abnormal</div><div class="text-2xl font-bold text-red-600" id="stat-abnormal">—</div></div>
+            </div>
+
+            <!-- Filter -->
+            <div class="bg-white rounded-lg shadow mb-6 p-4">
+                <div class="flex gap-4 items-center">
+                    <input type="text" id="filterPatient" placeholder="Patient ID..." class="border rounded-lg px-3 py-2 text-sm flex-1">
+                    <input type="text" id="filterVisit" placeholder="Visit ID (optional)..." class="border rounded-lg px-3 py-2 text-sm flex-1">
+                    <button onclick="loadLabs()" class="bg-gray-100 px-4 py-2 rounded-lg text-sm hover:bg-gray-200">Search</button>
+                </div>
+            </div>
+
+            <!-- Labs Table -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordered</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Test Name</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Result</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Flag</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200" id="labsTable">
+                        <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Enter a patient ID to view lab results</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
+        <h2 class="text-lg font-bold mb-4">Order Lab Test</h2>
+        <form id="labForm" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Patient ID</label>
+                    <input type="text" name="patient_id" required class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Visit ID</label>
+                    <input type="text" name="visit_id" required class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Test Name</label>
+                <input type="text" name="test_name" required class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm" placeholder="e.g. Complete Blood Count">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Test Category</label>
+                    <select name="test_category" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                        <option value="hematology">Hematology</option>
+                        <option value="chemistry">Chemistry</option>
+                        <option value="urinalysis">Urinalysis</option>
+                        <option value="microbiology">Microbiology</option>
+                        <option value="immunology">Immunology</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Priority</label>
+                    <select name="priority" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                        <option value="routine">Routine</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="stat">STAT</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Clinical Notes</label>
+                <textarea name="clinical_notes" rows="2" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm" placeholder="Reason for ordering..."></textarea>
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t">
+                <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">Order</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Update Result Modal -->
+<div id="updateModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
+        <h2 class="text-lg font-bold mb-4">Update Lab Result</h2>
+        <form id="updateForm" class="space-y-4">
+            <input type="hidden" id="updateId">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Result Value</label>
+                    <input type="text" id="updateValue" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Unit</label>
+                    <input type="text" id="updateUnit" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Reference Range</label>
+                    <input type="text" id="updateRef" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Status</label>
+                    <select id="updateStatus" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                        <option value="completed">Completed</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Result Notes</label>
+                <textarea id="updateNotes" rows="2" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm"></textarea>
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t">
+                <button type="button" onclick="document.getElementById('updateModal').classList.add('hidden')" class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">Save Result</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+async function loadLabs() {
+    const patientId = document.getElementById('filterPatient').value;
+    if (!patientId) return;
+    const r = await fetch(`/api/v1/ehr/lab-results/patient/${patientId}`);
+    if (!r.ok) { alert('Error loading labs'); return; }
+    const data = await r.json();
+    document.getElementById('stat-total').textContent = data.length;
+    document.getElementById('stat-ordered').textContent = data.filter(l => l.status === 'ordered').length;
+    document.getElementById('stat-completed').textContent = data.filter(l => l.status === 'completed').length;
+    document.getElementById('stat-abnormal').textContent = data.filter(l => l.abnormal_flag && l.abnormal_flag !== 'normal').length;
+    const tbody = document.getElementById('labsTable');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">No lab results found</td></tr>'; return; }
+    const flagColors = { normal: 'text-gray-500', low: 'text-blue-600', high: 'text-red-600', critical: 'text-red-800 font-bold' };
+    const statusColors = { ordered: 'bg-yellow-100 text-yellow-800', in_progress: 'bg-blue-100 text-blue-800', completed: 'bg-green-100 text-green-800', cancelled: 'bg-gray-100 text-gray-800' };
+    tbody.innerHTML = data.map(l => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2 text-sm">${new Date(l.ordered_at).toLocaleDateString()}</td>
+            <td class="px-4 py-2 text-sm font-medium">${l.test_name}</td>
+            <td class="px-4 py-2 text-sm">${l.result_value ?? '—'}</td>
+            <td class="px-4 py-2 text-sm text-gray-500">${l.reference_range ?? '—'}</td>
+            <td class="px-4 py-2 text-sm ${flagColors[l.abnormal_flag] || ''}">${l.abnormal_flag ?? '—'}</td>
+            <td class="px-4 py-2 text-sm"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[l.status] || ''}">${l.status}</span></td>
+            <td class="px-4 py-2 text-sm">
+                ${l.status === 'ordered' || l.status === 'in_progress' ? `<button class="text-blue-500 hover:underline text-xs" onclick="openUpdate('${l.id}','${l.result_value || ''}','${l.result_unit || ''}','${l.reference_range || ''}','${l.status}','${l.result_notes || ''}')">Update</button>` : ''}
+            </td>
+        </tr>
+    `).join('');
+}
+function openUpdate(id, val, unit, ref, status, notes) {
+    document.getElementById('updateId').value = id;
+    document.getElementById('updateValue').value = val;
+    document.getElementById('updateUnit').value = unit;
+    document.getElementById('updateRef').value = ref;
+    document.getElementById('updateStatus').value = status;
+    document.getElementById('updateNotes').value = notes;
+    document.getElementById('updateModal').classList.remove('hidden');
+}
+document.getElementById('labForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = { patient_id: fd.get('patient_id'), visit_id: fd.get('visit_id'), test_name: fd.get('test_name'), test_category: fd.get('test_category'), priority: fd.get('priority') };
+    if (fd.get('clinical_notes')) data.clinical_notes = fd.get('clinical_notes');
+    const r = await fetch('/api/v1/ehr/lab-results', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+    if (r.ok) { document.getElementById('createModal').classList.add('hidden'); e.target.reset(); loadLabs(); }
+    else { const err = await r.json(); alert(err.detail || 'Error'); }
+});
+document.getElementById('updateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('updateId').value;
+    const data = {};
+    const v = document.getElementById('updateValue').value;
+    const u = document.getElementById('updateUnit').value;
+    const r2 = document.getElementById('updateRef').value;
+    if (v) data.result_value = v;
+    if (u) data.result_unit = u;
+    if (r2) data.reference_range = r2;
+    data.status = document.getElementById('updateStatus').value;
+    const n = document.getElementById('updateNotes').value;
+    if (n) data.result_notes = n;
+    const r = await fetch(`/api/v1/ehr/lab-results/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+    if (r.ok) { document.getElementById('updateModal').classList.add('hidden'); loadLabs(); }
+    else { const err = await r.json(); alert(err.detail || 'Error'); }
+});
+</script>
+</body>
+</html>
