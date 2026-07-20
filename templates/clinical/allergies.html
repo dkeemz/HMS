@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allergies — HMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body class="h-full bg-gray-50">
+<div class="flex h-full">
+    {% include "components/sidebar.html" %}
+    <main class="flex-1 overflow-auto">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Allergy Tracking</h1>
+                    <p class="text-gray-500 mt-1">Per-patient known allergies with severity levels</p>
+                </div>
+                <button onclick="document.getElementById('createModal').classList.remove('hidden')"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    + Add Allergy
+                </button>
+            </div>
+
+            <div class="bg-white rounded-lg shadow mb-6 p-4">
+                <div class="flex gap-4 items-center">
+                    <input type="text" id="filterPatient" placeholder="Patient ID..." class="border rounded-lg px-3 py-2 text-sm flex-1">
+                    <button onclick="loadAllergies()" class="bg-gray-100 px-4 py-2 rounded-lg text-sm hover:bg-gray-200">Search</button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Allergen</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reaction</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Severity</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200" id="allergiesTable">
+                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Enter a patient ID to view allergies</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="createModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6">
+        <h2 class="text-lg font-bold mb-4">Add Allergy</h2>
+        <form id="allergyForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Patient ID</label>
+                <input type="text" name="patient_id" required class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Allergen</label>
+                <input type="text" name="allergen" required class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm" placeholder="e.g. Penicillin">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Category</label>
+                    <select name="allergen_category" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                        <option value="">—</option>
+                        <option value="medication">Medication</option>
+                        <option value="food">Food</option>
+                        <option value="environmental">Environmental</option>
+                        <option value="latex">Latex</option>
+                        <option value="contrast">Contrast Media</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Severity</label>
+                    <select name="severity" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm">
+                        <option value="mild">Mild</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="severe">Severe</option>
+                        <option value="life_threatening">Life-threatening</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Reaction</label>
+                <textarea name="reaction" rows="2" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm" placeholder="Description of reaction..."></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Notes</label>
+                <textarea name="notes" rows="2" class="mt-1 block w-full border rounded-lg px-3 py-2 text-sm"></textarea>
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t">
+                <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+async function loadAllergies() {
+    const pid = document.getElementById('filterPatient').value;
+    if (!pid) return;
+    const r = await fetch(`/api/v1/ehr/allergies/patient/${pid}?active_only=true`);
+    if (!r.ok) { alert('Error'); return; }
+    const data = await r.json();
+    const tbody = document.getElementById('allergiesTable');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">No allergies found</td></tr>'; return; }
+    const severityColors = { mild: 'bg-yellow-100 text-yellow-800', moderate: 'bg-orange-100 text-orange-800', severe: 'bg-red-100 text-red-800', life_threatening: 'bg-red-200 text-red-900 font-bold' };
+    tbody.innerHTML = data.map(a => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2 text-sm font-medium">${a.allergen}</td>
+            <td class="px-4 py-2 text-sm">${a.allergen_category || '—'}</td>
+            <td class="px-4 py-2 text-sm">${a.reaction || '—'}</td>
+            <td class="px-4 py-2 text-sm"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${severityColors[a.severity] || ''}">${a.severity}</span></td>
+            <td class="px-4 py-2 text-sm"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${a.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${a.status}</span></td>
+            <td class="px-4 py-2 text-sm">
+                <button class="text-red-500 hover:underline text-xs" onclick="deleteAllergy('${a.id}')">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+async function deleteAllergy(id) {
+    if (!confirm('Delete this allergy?')) return;
+    const r = await fetch(`/api/v1/ehr/allergies/${id}`, { method: 'DELETE' });
+    if (r.ok) loadAllergies();
+}
+document.getElementById('allergyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = { patient_id: fd.get('patient_id'), allergen: fd.get('allergen'), severity: fd.get('severity') };
+    if (fd.get('allergen_category')) data.allergen_category = fd.get('allergen_category');
+    if (fd.get('reaction')) data.reaction = fd.get('reaction');
+    if (fd.get('notes')) data.notes = fd.get('notes');
+    const r = await fetch('/api/v1/ehr/allergies', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+    if (r.ok) { document.getElementById('createModal').classList.add('hidden'); e.target.reset(); loadAllergies(); }
+    else { const err = await r.json(); alert(err.detail || 'Error'); }
+});
+</script>
+</body>
+</html>

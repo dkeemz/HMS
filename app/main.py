@@ -197,3 +197,18 @@ async def ehr_labs_page(request: Request, user: User = Depends(get_current_user_
 @app.get("/ehr/documents")
 async def ehr_documents_page(request: Request, user: User = Depends(get_current_user_from_cookie)):
     return templates.TemplateResponse(request, "ehr/documents.html", _user_ctx(user))
+
+
+@app.get("/clinical/problems")
+async def clinical_problems_page(request: Request, user: User = Depends(get_current_user_from_cookie)):
+    return templates.TemplateResponse(request, "clinical/problems.html", _user_ctx(user))
+
+
+@app.get("/clinical/medications")
+async def clinical_medications_page(request: Request, user: User = Depends(get_current_user_from_cookie)):
+    return templates.TemplateResponse(request, "clinical/medications.html", _user_ctx(user))
+
+
+@app.get("/clinical/allergies")
+async def clinical_allergies_page(request: Request, user: User = Depends(get_current_user_from_cookie)):
+    return templates.TemplateResponse(request, "clinical/allergies.html", _user_ctx(user))

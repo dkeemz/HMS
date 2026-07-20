@@ -13,6 +13,8 @@ from app.core.database import Base
 if TYPE_CHECKING:
     from app.models.allergy import Allergy
     from app.models.condition import Condition
+    from app.models.medication import Medication
+    from app.models.problem import Problem
     from app.models.consent import Consent
     from app.models.emergency_contact import EmergencyContact
     from app.models.family_history import FamilyHistory
@@ -92,6 +94,12 @@ class Patient(Base):
     )
     clinical_documents: Mapped[list] = sa_relationship(
         back_populates="patient", foreign_keys="[ClinicalDocument.patient_id]",
+    )
+    problems: Mapped[list[Problem]] = sa_relationship(
+        back_populates="patient", foreign_keys="[Problem.patient_id]",
+    )
+    medications: Mapped[list[Medication]] = sa_relationship(
+        back_populates="patient", foreign_keys="[Medication.patient_id]",
     )
 
 

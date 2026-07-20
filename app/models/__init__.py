@@ -13,6 +13,7 @@ from app.models.ehr_note import EhrNote
 from app.models.family_history import FamilyHistory
 from app.models.insurance_policy import InsurancePolicy
 from app.models.lab_result import LabResult
+from app.models.medication import Medication
 from app.models.password_history import PasswordHistory
 from app.models.password_reset import PasswordResetToken
 from app.models.patient import (
@@ -25,6 +26,7 @@ from app.models.patient import (
 )
 from app.models.permission import Permission
 from app.models.permission_override import PermissionOverride
+from app.models.problem import Problem
 from app.models.role import Role
 from app.models.role_approval import RoleAssignmentApproval
 from app.models.role_permission import RolePermission
@@ -57,12 +59,14 @@ __all__ = [
     "InsuranceProvider",
     "LabResult",
     "MrnSequence",
+    "Medication",
     "NextOfKin",
     "Patient",
     "PasswordHistory",
     "PasswordResetToken",
     "Permission",
     "PermissionOverride",
+    "Problem",
     "Role",
     "RoleAssignmentApproval",
     "RolePermission",
